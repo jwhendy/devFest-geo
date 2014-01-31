@@ -1,0 +1,85 @@
+#+title: Working with geo-spatial data in R
+#+OPTIONS: reveal_center:t reveal_progress:t reveal_history:nil reveal_control:t
+#+OPTIONS: reveal_mathjax:t reveal_rolling_links:t reveal_keyboard:t reveal_overview:t num:nil
+#+OPTIONS: reveal_width:1280 reveal_height:800
+#+OPTIONS: toc:nil
+#+REVEAL_MARGIN: 0.05
+#+REVEAL_MIN_SCALE: 0.5
+#+REVEAL_MAX_SCALE: 2.5
+#+REVEAL_THEME: solarized
+#+REVEAL_HLEVEL: 2
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Working with geo-spatial data in R">
+#+REVEAL_POSTAMBLE: <p> Created by John W. Henderson </p>
+
+* Intro
+
+- Brief overview of geo-spatial miscellany in R
+- Key libraries
+  - Working with Google maps: =ggmap=
+  - Great circle paths: =geosphere=
+  - Larger scale maps: =maps= (comes with R)
+  - Projection conversion/KML generation: =rgdal= and =sp=
+  - Plotting: =ggplot2=
+- This is a hobby and I'm /not/ a professional...
+
+* Find a location
+
+#+begin_center
+[[./ust.png]]
+#+end_center
+
+* Right click -> What's here?
+
+#+attr_html: :height 90%
+#+begin_center
+[[./ust-coordinates.png]]
+#+end_center
+
+* Grabbing Google maps with =ggmap=
+- Sources: Google, Stamen, or CloudMade
+#+latex: \scriptsize
+#+name: mpls
+#+header: :file mpls.pdf
+#+begin_src R :session r :exports code :results output graphics :eval no
+library(ggmap)
+mpls <- get_map(location = c(lon = -93.261, lat = 44.971),
+                zoom = 15, source = "google",
+                maptype = "hybrid", crop = T)
+ggmap(mpls)
+#+end_src
+
+* Code
+  
+** Embedding rCharts 
+#+begin_src R :exports results :results silent
+  options(prompt = "> ")
+#+end_src
+
+#+begin_src R :exports both :results html
+  library(rCharts)
+  hair_eye_male = subset(as.data.frame(HairEyeColor), Sex == "Male")
+  n1 <- nPlot(Freq ~ Hair, group = 'Eye',
+  data = hair_eye_male, type = 'multiBarChart'
+  )
+  n1$set(width = 1200, height = 600)  
+  n1$show('inline', include_assets = TRUE, cdn = TRUE)
+#+end_src
+
+
+** Code
+You can check the raw Org-file [[https://dl.dropboxusercontent.com/u/8750577/rChart.org][here]]
+
+#+begin_src :exports none
+#+OPTIONS: reveal_center:nil reveal_progress:t reveal_history:nil reveal_control:t
+#+OPTIONS: reveal_mathjax:t reveal_rolling_links:t reveal_keyboard:t reveal_overview:t num:nil
+#+OPTIONS: reveal_width:1280 reveal_height:800
+#+OPTIONS: toc:nil
+#+REVEAL_MARGIN: 0.05
+#+REVEAL_MIN_SCALE: 0.5
+#+REVEAL_MAX_SCALE: 2.5
+#+REVEAL_THEME: solarized
+#+REVEAL_HLEVEL: 2
+#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Working with geo-spatial data in R">
+#+REVEAL_POSTAMBLE: <p> Created by John W. Henderson </p>
+
+#+end_src
