@@ -1,85 +1,538 @@
 #+title: Working with geo-spatial data in R
-#+OPTIONS: reveal_center:t reveal_progress:t reveal_history:nil reveal_control:t
-#+OPTIONS: reveal_mathjax:t reveal_rolling_links:t reveal_keyboard:t reveal_overview:t num:nil
-#+OPTIONS: reveal_width:1280 reveal_height:800
-#+OPTIONS: toc:nil
-#+REVEAL_MARGIN: 0.05
-#+REVEAL_MIN_SCALE: 0.5
-#+REVEAL_MAX_SCALE: 2.5
-#+REVEAL_THEME: solarized
-#+REVEAL_HLEVEL: 2
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Working with geo-spatial data in R">
-#+REVEAL_POSTAMBLE: <p> Created by John W. Henderson </p>
+#+author: John Henderson
+#+email: jw.hendy@gmail.com
+#+date: 08 February 2014
+#+setupfile: "~/org/aux/beamer-setup.org"
+#+startup: beamer
+#+latex_class_options: [sans,aspectratio=169,presentation,bigger,fleqn]
+#+options: H:1
+#+latex_header: %\usetheme{naked}
+#+latex_header: \usepackage{lmodern}
+#+latex_header: \usetheme[alternativetitlepage=true,titleline=true]{Torino}
+#+latex_header: \usecolortheme{freewilly}
+
+
+* Setup								   :noexport:
+
+#+begin_src R :session r :results silent :exports none
+library(ggmap)
+library(maps)
+library(geosphere)
+# library(rgdal)
+library(maptools)
+library(ggplot2)
+library(plyr)
+
+#+end_src
 
 * Intro
 
 - Brief overview of geo-spatial miscellany in R
 - Key libraries
-  - Working with Google maps: =ggmap=
+  - Getting coordinates/working with Google: =ggmap=
   - Great circle paths: =geosphere=
   - Larger scale maps: =maps= (comes with R)
-  - Projection conversion/KML generation: =rgdal= and =sp=
+  - Projection conversion/KML generation: =rgdal=, =maptools=, and =sp=
   - Plotting: =ggplot2=
+\pause
+
 - This is a hobby and I'm /not/ a professional...
 
-* Find a location
+* Using =ggmap= to get lat/lon coordinates
+- Just type what you wold type into Google Maps
 
-#+begin_center
-[[./ust.png]]
-#+end_center
 
-* Right click -> What's here?
-
-#+attr_html: :height 90%
-#+begin_center
-[[./ust-coordinates.png]]
-#+end_center
-
-* Grabbing Google maps with =ggmap=
-- Sources: Google, Stamen, or CloudMade
 #+latex: \scriptsize
-#+name: mpls
-#+header: :file mpls.pdf
-#+begin_src R :session r :exports code :results output graphics :eval no
-library(ggmap)
-mpls <- get_map(location = c(lon = -93.261, lat = 44.971),
+
+#+begin_src R :session r :exports both :results output :eval no
+  # install.packages("ggmap")
+  > library(ggmap)
+  > geocode("St. Paul, MN")
+
+#+end_src
+
+#+RESULTS:
+:         lon     lat
+: 1 -93.08996 44.9537
+
+
+#+begin_src R :session r :exports both :results output :eval no
+  > geocode("2115 Summit Ave., St. Paul, MN")
+#+end_src
+
+#+RESULTS:
+:         lon      lat
+: 1 -93.18971 44.94412
+
+#+begin_src R :session r :exports both :results output :eval no
+  > geocode("University of St. Thomas, MN")
+#+end_src
+
+#+RESULTS:
+:         lon      lat
+: 1 -93.18975 44.94192
+
+#+latex: \normalsize
+* Grabbing maps
+
+Methods
+- Lat/lon + zoom level
+- Bounding box
+
+Sources
+- Google
+- Stamen
+- Cloudmade
+- OpenStreetMap
+
+* Using lat/lon + zoom
+
+#+header: :file ./img/ust-coords-zoom.pdf :width 8 :height 8
+#+begin_src R :session r :exports code :results silent :eval no
+
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
+ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
                 zoom = 15, source = "google",
                 maptype = "hybrid", crop = T)
-ggmap(mpls)
+
+ggmap(ust)
+
 #+end_src
 
-* Code
+* Using lat/lon + zoom
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+[[./img/ust-coords-zoom.pdf]]
+#+end_center
+
+* Using lat/lon + bounding box
+
+#+header: :file ./img/ust-coords-box.pdf :width 8 :height 6
+#+begin_src R :session r :exports code :results output graphics :eval no
+
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
+
+box <- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
+         right = loc$lon + 0.04, top = loc$lat + 0.02)
+
+ust_box <- get_map(location = box, source = "stamen",
+                   maptype = "watercolor", crop = T)
+
+ggmap(ust_box)
+
+#+end_src
+
+#+RESULTS:
+[[file:./img/ust-coords-box.pdf]]
+
+* Using lat/lon + bounding box
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+[[./img/ust-coords-box.pdf]]
+#+end_center
+
+* Overplotting ggmaps
+
+- =ggmap()= is an addition to =ggplot2= functionality
+- Thus, layering standard =ggplot2= graphics on top of maps is easy!
+
+#+latex: \scriptsize
+#+header: :file ./img/ggmap-points.pdf :height 6 :width 9
+#+begin_src R :session r :exports code :results output graphics :eval no
+locs <- data.frame(names = c("st. paul", "minneapolis"))
+locs <- cbind(locs, geocode(as.character(locs$names)))
+
+mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
+               zoom = 10, source = "stamen", maptype = "toner", crop = T)
+
+p <- ggmap(mid)
+p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
+                    dat = locs, size = 6)
+p <- p + scale_colour_discrete("Location")
+p
+#+end_src
+
+#+latex: \normalsize
+
+* Overplotting ggmaps
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+[[./img/ggmap-points.pdf]]
+#+end_center
+
+* Working with world/contry maps
+
+- =get_map()= limited by allowable zoom levels (e.g. =0 < zoom < 21=)
+- To plot larger scale data, the =maps= package is probably preferred
+- Various maps available; see [[http://cran.r-project.org/web/packages/maps/maps.pdf][documentation]] for details
+
+#+latex: \scriptsize
+#+begin_src R :session r :exports both :results output :eval no
+
+library(maps)
+world <- map_data("world")
+head(map, 5)
+
+#+end_src
+
+#+RESULTS:
+:        long      lat group order region subregion
+: 1 -133.3664 58.42416     1     1 Canada      <NA>
+: 2 -132.2681 57.16308     1     2 Canada      <NA>
+: 3 -132.0498 56.98610     1     3 Canada      <NA>
+: 4 -131.8797 56.74001     1     4 Canada      <NA>
+: 5 -130.2492 56.09945     1     5 Canada      <NA>
+
+* World map example
+
+#+latex: \scriptsize
+#+name: world-map
+#+header: :file ./img/world.pdf :width 9 :height 6
+#+begin_src R :session r :exports both :results output graphics :eval no
+# pay attention to column names (lon vs. long!)
+p <- ggplot(world, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+#+end_src
+
+#+begin_center
+#+attr_latex: :height 4.5cm
+#+RESULTS: world-map
+[[file:./img/world.pdf]]
+#+end_center
+
+#+latex: \normalsize
+
+* United States example
+
+#+latex: \scriptsize
+#+name: usa-map
+#+header: :file ./img/usa.pdf :width 9 :height 6
+#+begin_src R :session r :exports both :results output graphics :eval no
+usa <- map_data("state")
+p <- ggplot(usa, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+#+end_src
+
+#+begin_center
+#+attr_latex: :height 4.5cm
+#+RESULTS: usa-map
+[[file:./img/usa.pdf]]
+#+end_center
+
+#+latex: \normalsize
+
+* Subsetting areas
+
+#+latex: \scriptsize
+#+name: some-states
+#+header: :file ./img/some-states.pdf :width 6 :height 6
+#+begin_src R :session r :exports code :results graphics :eval no
+states <- c("minnesota", "wisconsin", "illinois", "indiana",
+            "iowa", "missouri", "michigan")
+
+states_map <- map_data("state")
+
+states_map <- states_map[states_map$region %in% states, ]
+
+p <- ggplot(states_map, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+#+end_src
+
+* Subsetting areas
+
+#+begin_center
+#+attr_latex: :height 6cm
+[[file:./img/some-states.pdf]]
+#+end_center
+
+* A hobby project
+
+- Internal talks at 3M typically given live to US audience; recorded for int'l
+- Organized two "reverse talks" to reach a wider global audience
+- Attendance records shattered
+- Wanted to visualize impact/reach!
+
+* The inspiration
+
+#+begin_center
+#+attr_latex: :height 6cm
+[[./img/facebook-map-lo.png]]
+#+end_center
+
+* Great circle basics
+
+- =gcIntermediate()= function from  =geosphere= package
+
+#+latex: \scriptsize
+#+begin_src R :eval no
+library(geosphere)
+arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
+                      n = steps, addStartEnd = T)
+#+end_src
+
+* Crossing the Date Line
+
+#+latex: \scriptsize
+#+begin_src R :eval no :exports code
+# draw great circles from St. Paul to everywhere else
+gcircles <- lapply(1:nrow(end), function(i) {
+  temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T, breakAtDateLine = T)
+
+  # if temp is a list, rbind and return single data.frame
+  if(is.list(temp) == T) {
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
+             rep(paste0("j", i), nrow(temp[[2]])))
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
+    temp$id <- ids
+  }
   
-** Embedding rCharts 
-#+begin_src R :exports results :results silent
-  options(prompt = "> ")
-#+end_src
-
-#+begin_src R :exports both :results html
-  library(rCharts)
-  hair_eye_male = subset(as.data.frame(HairEyeColor), Sex == "Male")
-  n1 <- nPlot(Freq ~ Hair, group = 'Eye',
-  data = hair_eye_male, type = 'multiBarChart'
-  )
-  n1$set(width = 1200, height = 600)  
-  n1$show('inline', include_assets = TRUE, cdn = TRUE)
-#+end_src
-
-
-** Code
-You can check the raw Org-file [[https://dl.dropboxusercontent.com/u/8750577/rChart.org][here]]
-
-#+begin_src :exports none
-#+OPTIONS: reveal_center:nil reveal_progress:t reveal_history:nil reveal_control:t
-#+OPTIONS: reveal_mathjax:t reveal_rolling_links:t reveal_keyboard:t reveal_overview:t num:nil
-#+OPTIONS: reveal_width:1280 reveal_height:800
-#+OPTIONS: toc:nil
-#+REVEAL_MARGIN: 0.05
-#+REVEAL_MIN_SCALE: 0.5
-#+REVEAL_MAX_SCALE: 2.5
-#+REVEAL_THEME: solarized
-#+REVEAL_HLEVEL: 2
-#+REVEAL_HEAD_PREAMBLE: <meta name="description" content="Working with geo-spatial data in R">
-#+REVEAL_POSTAMBLE: <p> Created by John W. Henderson </p>
+  ...
+})
 
 #+end_src
+#+latex: \normalsize
+
+* The plot
+
+#+latex: \scriptsize
+#+begin_src R :eval no :exports code
+p <- ggplot()
+p <- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
+                      data = world, colour = "gray10", fill = "gray95")
+p <- p + geom_line(aes(x = lon, y = lat, group = id),                      # great circles
+                   dat = gcircles, lwd = 0.4, alpha = 0.5)
+p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total/pi)),          # points
+                    dat = talks_agg, colour = "#555599")
+p <- p + scale_size("Total participants\n(both events)",                   # adjust legend
+                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+                    breaks = sqrt(c(10, 50, 100) / pi),
+                    labels = c(10, 50, 100), range = c(1, 10))
+p <- p + theme_bw()                                                        # bw theme
+p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # tweak
+               axis.ticks = element_blank(), panel.grid = element_blank(),
+               legend.position = c(0.092, 0.15))
+#+end_src
+#+latex: \normalsize
+* The result
+
+#+name: great-circles
+#+header: :file ./img/great-circles.pdf :width 13 :height 7
+#+begin_src R :session r :exports results :results output graphics :eval no
+
+talks <- read.csv("./data/talk-locations.csv")
+head(talks, 5)
+
+talks$total <- talks$live + talks$rec
+talks_agg <- ddply(talks, .(country, city), summarize,
+                   total = sum(total), lat = lat[1], lon = lon[1])
+
+start <- talks_agg[talks_agg$city == "Saint Paul", ]
+end <- talks_agg[talks_agg$city != "Saint Paul", ]
+
+# draw great circles from St. Paul to everywhere else
+gcircles <- lapply(1:nrow(end), function(i) {
+  temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T, breakAtDateLine = T)
+
+  # if temp is a list, rbind and return single list
+  if(is.list(temp) == T) {
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
+             rep(paste0("j", i), nrow(temp[[2]])))
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
+    temp$id <- ids
+  }
+
+  else {
+    ids <- rep(paste0("i", i), nrow(temp))
+    temp <- as.data.frame(temp)
+    temp$id <- ids
+  }
+  
+  return(temp)
+  
+})
+
+gcircles <- do.call(rbind, gcircles)
+
+world <- map_data("world")
+world <- world[world$lat > -57, ]
+
+# initialize a ggplot object; need to do it this way since
+# we're using independent layers that don't share same aes params
+p <- ggplot()
+
+# plot the world map
+p <- p + geom_polygon(aes(x = long, y = lat, group = group),
+                      data = world, colour = "gray10",
+                      fill = "gray95")
+
+# plot the great circles
+p <- p + geom_line(aes(x = lon, y = lat, group = id),
+                   dat = gcircles, lwd = 0.4, alpha = 0.5)
+
+# plot points, sized by area
+p <- p + geom_point(aes(x = lon, y = lat,
+                    size = sqrt(total/pi)), dat = talks_agg,
+                    colour = "#555599")
+
+# set label for legend; rescale sizes/lagels for area vs. diameter
+p <- p + scale_size("Total participants\n(both events)",
+                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+                    breaks = sqrt(c(10, 50, 100) / pi),
+                    labels = c(10, 50, 100), range = c(1, 10))
+p <- p + theme_bw()
+
+# gets rid of axis text/ticks, moves legend to lower left vs. right side
+p <- p + theme(axis.text = element_blank(),
+               axis.title = element_blank(),
+               axis.ticks = element_blank(),
+               panel.grid = element_blank(),
+               legend.position = c(0.092, 0.15))
+
+p
+#+end_src
+#+latex: \normalsize
+
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+#+RESULTS: great-circles
+[[file:./img/great-circles.pdf]]
+#+end_center
+
+* Infographic
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+[[./img/infographic-flattened-lo.jpg]]
+#+end_center
+
+* Using lat/lon data with Google Earth
+
+#+begin_src R :session r :exports code :results silent :eval yes
+
+talks <- read.csv("./data/talk-locations.csv")
+talks <- talks[!duplicated(talks[, c("country", "city")]),
+               c("city", "lat", "lon")]
+
+talks_sp <- talks
+coordinates(talks_sp) <- 
+
+
+
+
+#+end_src
+
+* Getting some GPS data
+
+#+begin_center
+[[https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en][_AndroSensor_]]
+#+end_center
+
+*** 							     :B_column:BMCOL:
+   :PROPERTIES:
+   :BEAMER_env: column
+   :BEAMER_col: 0.45
+   :END:
+#+begin_center
+#+attr_latex: :height 5cm
+[[./img/andro-main.png]]
+#+end_center
+
+*** 							     :B_column:BMCOL:
+   :PROPERTIES:
+   :BEAMER_env: column
+   :BEAMER_col: 0.45
+   :END:
+#+begin_center
+#+attr_latex: :height 5cm
+[[./img/andro-sensors.png]]
+#+end_center
+
+* Reading/cleaning the data
+
+#+latex: \scriptsize
+#+begin_src R :session r :exports both :results output :eval yes
+gps <- read.csv("./data/gps-data.csv", sep = ";")
+
+# reduce to columns of interest
+gps <- gps[, c(10, 11, 13, 18)]
+
+# give the data sensical names
+names(gps) <- c("lat", "lon", "speed", "time")
+head(gps, 5)
+#+end_src
+
+#+RESULTS:
+:        lat       lon speed time
+: 1 44.92633 -93.09771    NA    5
+: 2 44.92633 -93.09771    NA  505
+: 3 44.92633 -93.09771    NA 1011
+: 4 44.92633 -93.09771    NA 1532
+: 5 44.92626 -93.09747     0 2032
+
+#+latex: \normalsize
+
+* Grab a background map
+
+#+latex: \scriptsize
+
+#+name: gps-map
+#+header: :file ./img/gps-map.pdf :width 9 :height 4
+#+begin_src R :session r :exports both :results output graphics :eval no
+box <- c(left = min(gps$lon), bottom = min(gps$lat),
+         right = max(gps$lon), top = max(gps$lat))
+
+gps_map <- get_map(location = box, source = "stamen",
+                   maptype = "terrain", crop = T)
+#+end_src
+
+#+begin_center
+#+attr_latex: :height 4cm
+#+RESULTS: gps-map
+[[file:./img/gps-map.pdf]]
+#+end_center
+
+
+* Overplot with speed
+
+#+latex: \scriptsize
+
+#+name: gps-map-over
+#+header: :file ./img/gps-map-over.pdf :width 12 :height 5
+#+begin_src R :session r :exports both :results output graphics :eval no
+p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
+                                 gps, size = 3)
+p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
+#+end_src
+
+#+begin_center
+#+attr_latex: :height 5cm
+#+RESULTS: gps-map-over
+[[file:./img/gps-map-over.pdf]]
+#+end_center
+
+#+latex: \normalsize
+
+
+
+* Reference
+
+- [[http://stat405.had.co.nz/ggmap.pdf][ggmap: Spatial Visualization with ggplot2]], Kahle \& Wickham
+- [[http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/][How to draw good looking maps in R]], uchicagoconsulting
+- [[http://www.stanford.edu/~cengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot][Great circles on a recentered worldmap]], AnthroSpace
+- [[http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/][How to map connections with great circles]], FlowingData
+- For any given package, find the documentation on [[http://cran.r-project.org/][CRAN]]!
+
+\vspace{0.5cm}
+
+Code and files from this presentation are on [[https://github.com/jwhendy/devFest-geo][github]]!
+
+

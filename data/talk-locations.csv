@@ -1,0 +1,61 @@
+country,city,lat,lon,talk,live,rec
+USA,Saint Paul,44.9629,-93.001456,a,63,33
+Canada,Calgary,51.100167,-114.041862,a,12,5
+USA,Austin,30.395606,-97.842436,a,6,9
+Mexico,Mexico City,19.358016,-99.274092,a,5,1
+Colombia,Bogota,4.672018,-74.115711,a,7,0
+Brazil,São Paulo,-22.845568,-47.165358,a,3,2
+Argentina,Buenos Aires,-34.421921,-58.719864,a,3,2
+United Kingdom,Bracknell,51.416499,-0.778184,a,19,12
+France,Paris,49.019986,2.19173,a,15,0
+Germany,Neuss,51.197297,6.713977,a,9,2
+Italy,Milan,45.476925,9.314497,a,9,1
+Poland,Wroclaw,51.136749,17.09728,a,9,1
+Sweden,Sollentuna,59.454073,17.924259,a,7,2
+Russia,St. Petersburg,59.900526,30.428025,a,7,5
+South Africa,Johannesburg,-26.068503,28.068384,a,7,0
+Saudi Arabia,Riyadh,24.807694,46.716891,a,5,0
+United Arab Emirates,Dubai,25.145149,55.196493,a,4,0
+India,Bangalore,12.849293,77.673962,a,3,0
+Thailand,Bangkok,13.77274,100.573507,a,3,1
+Malaysia,Shah Alam,3.105249,101.545161,a,2,0
+Singapore,Singapore,1.445986,103.811241,a,2,2
+Vietnam,Ho Chi Minh City,10.729988,106.722173,a,2,5
+Indonesia,Jakarta,-6.302385,106.83672,a,2,1
+China,Guangzhou,23.154487,113.450274,a,2,1
+China,Shanghai,31.174466,121.417369,a,1,1
+Taiwan,Yangmei,24.899906,121.10899,a,1,0
+Philippines,Makati City,14.544228,121.014345,a,1,2
+Korea,Hwaseong,37.22425,127.072302,a,1,2
+Japan,Kanagawa,35.58227,139.346589,a,0,5
+Australia,North Ryde,-33.797322,151.139112,a,0,1
+Venezuela,Valencia,10.1562,-67.937082,a,3,2
+USA,Saint Paul,44.9629,-93.001456,b,50,15
+USA,Salt Lake City,40.657232,-111.907819,b,6,2
+Canada,Calgary,51.100167,-114.041862,b,10,5
+Mexico,Mexico City,19.358016,-99.274092,b,2,0
+Colombia,Bogota,4.672018,-74.115711,b,7,0
+Brazil,São Paulo,-22.845568,-47.165358,b,5,0
+Argentina,Buenos Aires,-34.421921,-58.719864,b,6,0
+United Kingdom,Bracknell,51.416499,-0.778184,b,21,7
+France,Paris,49.019986,2.19173,b,6,0
+Germany,Neuss,51.197297,6.713977,b,9,2
+Italy,Milan,45.476925,9.314497,b,15,2
+Sweden,Sollentuna,59.454073,17.924259,b,3,1
+Russia,St. Petersburg,59.900526,30.428025,b,7,1
+South Africa,Johannesburg,-26.068503,28.068384,b,5,1
+Saudi Arabia,Riyadh,24.807694,46.716891,b,5,4
+United Arab Emirates,Dubai,25.145149,55.196493,b,1,2
+India,Bangalore,12.849293,77.673962,b,9,2
+Thailand,Bangkok,13.77274,100.573507,b,2,5
+Malaysia,Shah Alam,3.105249,101.545161,b,3,0
+Singapore,Singapore,1.445986,103.811241,b,1,2
+Vietnam,Ho Chi Minh City,10.729988,106.722173,b,7,1
+Indonesia,Jakarta,-6.302385,106.83672,b,5,1
+China,Guangzhou,23.154487,113.450274,b,9,2
+Taiwan,Yangmei,24.899906,121.10899,b,3,5
+Philippines,Makati City,14.544228,121.014345,b,9,0
+Korea,Hwaseong,37.22425,127.072302,b,4,0
+Japan,Kanagawa,35.58227,139.346589,b,5,0
+Australia,North Ryde,-33.797322,151.139112,b,4,3
+Venezuela,Valencia,10.1562,-67.937082,b,8,1

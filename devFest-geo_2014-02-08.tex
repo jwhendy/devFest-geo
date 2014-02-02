@@ -1,0 +1,403 @@
+% Created 2014-02-02 Sun 15:56
+\documentclass[sans,aspectratio=169,presentation,bigger,fleqn]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\tolerance=1000
+\usepackage{setspace}
+\setstretch{1.3}
+\usepackage{booktabs}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+%\usetheme{naked}
+\usepackage{lmodern}
+\usetheme[alternativetitlepage=true,titleline=true]{Torino}
+\usecolortheme{freewilly}
+\usetheme{default}
+\author{John Henderson}
+\date{08 February 2014}
+\title{Working with geo-spatial data in R}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs 24.3.1 (Org mode 8.2.5h)}}
+\begin{document}
+
+\maketitle
+
+
+\begin{frame}[fragile,label=sec-1]{Intro}
+ \begin{itemize}
+\item Brief overview of geo-spatial miscellany in R
+\item Key libraries
+\begin{itemize}
+\item Getting coordinates/working with Google: \texttt{ggmap}
+\item Great circle paths: \texttt{geosphere}
+\item Larger scale maps: \texttt{maps} (comes with R)
+\item Projection conversion/KML generation: \texttt{rgdal}, \texttt{maptools}, and \texttt{sp}
+\item Plotting: \texttt{ggplot2}
+\end{itemize}
+\end{itemize}
+\pause
+
+\begin{itemize}
+\item This is a hobby and I'm \emph{not} a professional\ldots{}
+\end{itemize}
+\end{frame}
+\begin{frame}[fragile,label=sec-2]{Using \texttt{ggmap} to get lat/lon coordinates}
+ \begin{itemize}
+\item Just type what you wold type into Google Maps
+\end{itemize}
+
+
+\scriptsize
+
+\begin{verbatim}
+  # install.packages("ggmap")
+  > library(ggmap)
+  > geocode("St. Paul, MN")
+\end{verbatim}
+
+\begin{verbatim}
+        lon     lat
+1 -93.08996 44.9537
+\end{verbatim}
+
+
+\begin{verbatim}
+  > geocode("2115 Summit Ave., St. Paul, MN")
+\end{verbatim}
+
+\begin{verbatim}
+        lon      lat
+1 -93.18971 44.94412
+\end{verbatim}
+
+\begin{verbatim}
+  > geocode("University of St. Thomas, MN")
+\end{verbatim}
+
+\begin{verbatim}
+        lon      lat
+1 -93.18975 44.94192
+\end{verbatim}
+
+\normalsize
+\end{frame}
+
+\begin{frame}[label=sec-3]{Grabbing maps}
+Methods
+\begin{itemize}
+\item Lat/lon + zoom level
+\item Bounding box
+\end{itemize}
+
+Sources
+\begin{itemize}
+\item Google
+\item Stamen
+\item Cloudmade
+\item OpenStreetMap
+\end{itemize}
+\end{frame}
+\begin{frame}[fragile,label=sec-4]{Using lat/lon + zoom}
+ \begin{verbatim}
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
+ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
+                zoom = 15, source = "google",
+                maptype = "hybrid", crop = T)
+
+ggmap(ust)
+\end{verbatim}
+\end{frame}
+\begin{frame}[label=sec-5]{Using lat/lon + zoom}
+\begin{center}
+\includegraphics[height=6.5cm]{./img/ust-coords-zoom.pdf}
+\end{center}
+\end{frame}
+\begin{frame}[fragile,label=sec-6]{Using lat/lon + bounding box}
+ \begin{verbatim}
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
+
+box <- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
+         right = loc$lon + 0.04, top = loc$lat + 0.02)
+
+ust_box <- get_map(location = box, source = "stamen",
+                   maptype = "watercolor", crop = T)
+
+ggmap(ust_box)
+\end{verbatim}
+\end{frame}
+\begin{frame}[label=sec-7]{Using lat/lon + bounding box}
+\begin{center}
+\includegraphics[height=6.5cm]{./img/ust-coords-box.pdf}
+\end{center}
+\end{frame}
+\begin{frame}[fragile,label=sec-8]{Overplotting ggmaps}
+ \begin{itemize}
+\item \texttt{ggmap()} is an addition to \texttt{ggplot2} functionality
+\item Thus, layering standard \texttt{ggplot2} graphics on top of maps is easy!
+\end{itemize}
+
+\scriptsize
+\begin{verbatim}
+locs <- data.frame(names = c("st. paul", "minneapolis"))
+locs <- cbind(locs, geocode(as.character(locs$names)))
+
+mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
+               zoom = 10, source = "stamen", maptype = "toner", crop = T)
+
+p <- ggmap(mid)
+p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
+                    dat = locs, size = 6)
+p <- p + scale_colour_discrete("Location")
+p
+\end{verbatim}
+
+\normalsize
+\end{frame}
+\begin{frame}[label=sec-9]{Overplotting ggmaps}
+\begin{center}
+\includegraphics[height=6.5cm]{./img/ggmap-points.pdf}
+\end{center}
+\end{frame}
+\begin{frame}[fragile,label=sec-10]{Working with world/contry maps}
+ \begin{itemize}
+\item \texttt{get\_map()} limited by allowable zoom levels (e.g. \texttt{0 < zoom < 21})
+\item To plot larger scale data, the \texttt{maps} package is probably preferred
+\item Various maps available; see \href{http://cran.r-project.org/web/packages/maps/maps.pdf}{documentation} for details
+\end{itemize}
+
+\scriptsize
+\begin{verbatim}
+library(maps)
+world <- map_data("world")
+head(map, 5)
+\end{verbatim}
+
+\begin{verbatim}
+       long      lat group order region subregion
+1 -133.3664 58.42416     1     1 Canada      <NA>
+2 -132.2681 57.16308     1     2 Canada      <NA>
+3 -132.0498 56.98610     1     3 Canada      <NA>
+4 -131.8797 56.74001     1     4 Canada      <NA>
+5 -130.2492 56.09945     1     5 Canada      <NA>
+\end{verbatim}
+\end{frame}
+\begin{frame}[fragile,label=sec-11]{World map example}
+ \scriptsize
+\begin{verbatim}
+# pay attention to column names (lon vs. long!)
+p <- ggplot(world, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+\end{verbatim}
+
+\begin{center}
+\includegraphics[height=4.5cm]{./img/world.pdf}
+\end{center}
+
+\normalsize
+\end{frame}
+\begin{frame}[fragile,label=sec-12]{United States example}
+ \scriptsize
+\begin{verbatim}
+usa <- map_data("state")
+p <- ggplot(usa, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+\end{verbatim}
+
+\begin{center}
+\includegraphics[height=4.5cm]{./img/usa.pdf}
+\end{center}
+
+\normalsize
+\end{frame}
+\begin{frame}[fragile,label=sec-13]{Subsetting areas}
+ \scriptsize
+\begin{verbatim}
+states <- c("minnesota", "wisconsin", "illinois", "indiana",
+            "iowa", "missouri", "michigan")
+
+states_map <- map_data("state")
+
+states_map <- states_map[states_map$region %in% states, ]
+
+p <- ggplot(states_map, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+\end{verbatim}
+\end{frame}
+\begin{frame}[label=sec-14]{Subsetting areas}
+\begin{center}
+\includegraphics[height=6cm]{./img/some-states.pdf}
+\end{center}
+\end{frame}
+\begin{frame}[label=sec-15]{A hobby project}
+\begin{itemize}
+\item Internal talks at 3M typically given live to US audience; recorded for int'l
+\item Organized two "reverse talks" to reach a wider global audience
+\item Attendance records shattered
+\item Wanted to visualize impact/reach!
+\end{itemize}
+\end{frame}
+\begin{frame}[label=sec-16]{The inspiration}
+\begin{center}
+\includegraphics[height=6cm]{./img/facebook-map-lo.png}
+\end{center}
+\end{frame}
+\begin{frame}[fragile,label=sec-17]{Great circle basics}
+ \begin{itemize}
+\item \texttt{gcIntermediate()} function from  \texttt{geosphere} package
+\end{itemize}
+
+\scriptsize
+\begin{verbatim}
+library(geosphere)
+arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
+                      n = steps, addStartEnd = T)
+\end{verbatim}
+\end{frame}
+\begin{frame}[fragile,label=sec-18]{Crossing the Date Line}
+ \scriptsize
+\begin{verbatim}
+# draw great circles from St. Paul to everywhere else
+gcircles <- lapply(1:nrow(end), function(i) {
+  temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T, breakAtDateLine = T)
+
+  # if temp is a list, rbind and return single data.frame
+  if(is.list(temp) == T) {
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
+             rep(paste0("j", i), nrow(temp[[2]])))
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
+    temp$id <- ids
+  }
+  
+  ...
+})
+\end{verbatim}
+\normalsize
+\end{frame}
+\begin{frame}[fragile,label=sec-19]{The plot}
+ \scriptsize
+\begin{verbatim}
+p <- ggplot()
+p <- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
+                      data = world, colour = "gray10", fill = "gray95")
+p <- p + geom_line(aes(x = lon, y = lat, group = id),                      # great circles
+                   dat = gcircles, lwd = 0.4, alpha = 0.5)
+p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total/pi)),          # points
+                    dat = talks_agg, colour = "#555599")
+p <- p + scale_size("Total participants\n(both events)",                   # adjust legend
+                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+                    breaks = sqrt(c(10, 50, 100) / pi),
+                    labels = c(10, 50, 100), range = c(1, 10))
+p <- p + theme_bw()                                                        # bw theme
+p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # tweak
+               axis.ticks = element_blank(), panel.grid = element_blank(),
+               legend.position = c(0.092, 0.15))
+\end{verbatim}
+\normalsize
+\end{frame}
+
+\begin{frame}[label=sec-20]{The result}
+\normalsize
+
+
+\begin{center}
+\includegraphics[height=6.5cm]{./img/great-circles.pdf}
+\end{center}
+\end{frame}
+\begin{frame}[label=sec-21]{Infographic}
+\begin{center}
+\includegraphics[height=6.5cm]{./img/infographic-flattened-lo.jpg}
+\end{center}
+\end{frame}
+\begin{frame}[label=sec-22]{Getting some GPS data}
+\begin{center}
+\href{https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en}{\uline{AndroSensor}}
+\end{center}
+
+\begin{columns}
+\begin{column}{0.45\textwidth}
+\begin{center}
+\includegraphics[height=5cm]{./img/andro-main.png}
+\end{center}
+\end{column}
+\begin{column}{0.45\textwidth}
+\begin{center}
+\includegraphics[height=5cm]{./img/andro-sensors.png}
+\end{center}
+\end{column}
+\end{columns}
+\end{frame}
+\begin{frame}[fragile,label=sec-23]{Reading/cleaning the data}
+ \scriptsize
+\begin{verbatim}
+gps <- read.csv("./data/gps-data.csv", sep = ";")
+
+# reduce to columns of interest
+gps <- gps[, c(10, 11, 13, 18)]
+
+# give the data sensical names
+names(gps) <- c("lat", "lon", "speed", "time")
+head(gps, 5)
+\end{verbatim}
+
+\begin{verbatim}
+       lat       lon speed time
+1 44.92633 -93.09771    NA    5
+2 44.92633 -93.09771    NA  505
+3 44.92633 -93.09771    NA 1011
+4 44.92633 -93.09771    NA 1532
+5 44.92626 -93.09747     0 2032
+\end{verbatim}
+
+\normalsize
+\end{frame}
+\begin{frame}[fragile,label=sec-24]{Grab a background map}
+ \scriptsize
+
+\begin{verbatim}
+box <- c(left = min(gps$lon), bottom = min(gps$lat),
+         right = max(gps$lon), top = max(gps$lat))
+
+gps_map <- get_map(location = box, source = "stamen",
+                   maptype = "terrain", crop = T)
+\end{verbatim}
+
+\begin{center}
+\includegraphics[height=4cm]{./img/gps-map.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile,label=sec-25]{Overplot with speed}
+ \scriptsize
+
+\begin{verbatim}
+p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
+                                 gps, size = 3)
+p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
+\end{verbatim}
+
+\begin{center}
+\includegraphics[height=5cm]{./img/gps-map-over.pdf}
+\end{center}
+
+\normalsize
+\end{frame}
+% Emacs 24.3.1 (Org mode 8.2.5h)
+\end{document}
