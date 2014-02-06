@@ -15,10 +15,11 @@
 * Setup								   :noexport:
 
 #+begin_src R :session r :results silent :exports none
+# install all of the following if you don't have them
 library(ggmap)
 library(maps)
 library(geosphere)
-# library(rgdal)
+library(rgdal)
 library(maptools)
 library(ggplot2)
 library(plyr)
@@ -414,22 +415,30 @@ p
 [[./img/infographic-flattened-lo.jpg]]
 #+end_center
 
-* Using lat/lon data with Google Earth
+* Creating =.kml= files for Google Earth
+- Pretty easy! (Follow along with [[http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML][this]], [[http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r][this]], and [[http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal][this]])
 
-#+begin_src R :session r :exports code :results silent :eval yes
+#+latex: \scriptsize
+#+begin_src R :session r :exports code :results silent :eval no
 
 talks <- read.csv("./data/talk-locations.csv")
 talks <- talks[!duplicated(talks[, c("country", "city")]),
                c("city", "lat", "lon")]
 
 talks_sp <- talks
-coordinates(talks_sp) <- 
+coordinates(talks_sp) <- c("lon", "lat")
+proj4string(talks_sp) <- CRS("+init=epsg:4238")
+talks_ll <- spTransform(talks_sp,
+                        CRS("+proj=longlat +datum=WGS84"))
 
-
-
+kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
+          name = talks_ll$city,
+          icon = "http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
 
 #+end_src
-
+#+latex: \normalsize
+* todo screenshot of Google Earth
+- Also create great circle data
 * Getting some GPS data
 
 #+begin_center
@@ -500,7 +509,6 @@ gps_map <- get_map(location = box, source = "stamen",
 [[file:./img/gps-map.pdf]]
 #+end_center
 
-
 * Overplot with speed
 
 #+latex: \scriptsize
@@ -521,7 +529,71 @@ p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 
 #+latex: \normalsize
 
+* Public transportation efficiency
 
+- Background information can be found [[https://github.com/tcrug/public-transpo][here]]
+
+#+latex: \scriptsize
+
+#+name: transpo
+#+begin_src R :session r :results silent :eval no
+transpo <- read.csv("./data/public-transpo.csv")
+
+transpo_agg <- ddply(transpo, .(city, state), summarize,
+                     btus_pmile_ave = mean(btus_pmile),
+                     density = mean(population) / mean(service_area_sq_mi))
+transpo_agg$lookup <- paste0(transpo_agg$city, ", ", transpo_agg$state)
+
+coords <- geocode(transpo_agg$lookup)
+
+transpo_agg <- cbind(transpo_agg, coords)
+
+# let's not run that again...
+write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F, sep = ",")
+#+end_src
+#+latex: \normalsize
+
+* Efficiency visualized
+
+#+latex: \scriptsize
+
+#+name: transpo-plot
+#+header: :file ./img/transpo-plot.pdf :width 11 :height 6
+#+begin_src R :session r :results output graphics :exports both :eval no
+plot <- read.csv("./data/transpo-agg-geocoded.csv")
+plot <- plot[plot$state != "AK" & plot$state != "HI", ]
+usa <- map_data("state")
+plot <- plot[order(plot$btus_pmile_ave), ]
+p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
+                             data = usa, fill = "gray95", colour = "gray10")
+p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
+                    size = sqrt(density)/pi), data = plot)
+p <- p + scale_colour_gradient("log(BTUs / passenger-mile)", trans = "log")
+p <- p + scale_x_continuous("") + scale_y_continuous("")
+p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
+                               labels = round((c(10, 20, 30, 40)*pi)^2, 0),
+                               range = c(1, 8))
+p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+#+end_src
+
+#+latex: \normalsize
+
+* Efficiency visualized
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+#+RESULTS: transpo-plot
+[[file:./img/transpo-plot.pdf]]
+#+end_center
+
+#+latex: \normalsize
+
+
+
+* todo ideas for remaining slides
+
+
+- 3M center with work activity (get data from timesheet app)
 
 * Reference
 

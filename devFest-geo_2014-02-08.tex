@@ -1,4 +1,4 @@
-% Created 2014-02-02 Sun 15:56
+% Created 2014-02-06 Thu 01:01
 \documentclass[sans,aspectratio=169,presentation,bigger,fleqn]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -31,7 +31,7 @@
 \hypersetup{
   pdfkeywords={},
   pdfsubject={},
-  pdfcreator={Emacs 24.3.1 (Org mode 8.2.5h)}}
+  pdfcreator={Emacs 24.3.1 (Org mode 8.2.5c)}}
 \begin{document}
 
 \maketitle
@@ -64,9 +64,9 @@
 \scriptsize
 
 \begin{verbatim}
-  # install.packages("ggmap")
-  > library(ggmap)
-  > geocode("St. Paul, MN")
+# install.packages("ggmap")
+> library(ggmap)
+> geocode("St. Paul, MN")
 \end{verbatim}
 
 \begin{verbatim}
@@ -76,7 +76,7 @@
 
 
 \begin{verbatim}
-  > geocode("2115 Summit Ave., St. Paul, MN")
+> geocode("2115 Summit Ave., St. Paul, MN")
 \end{verbatim}
 
 \begin{verbatim}
@@ -85,7 +85,7 @@
 \end{verbatim}
 
 \begin{verbatim}
-  > geocode("University of St. Thomas, MN")
+> geocode("University of St. Thomas, MN")
 \end{verbatim}
 
 \begin{verbatim}
@@ -115,8 +115,8 @@ Sources
  \begin{verbatim}
 loc <- geocode("2115 Summit Ave, St. Paul, MN")
 ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
-                zoom = 15, source = "google",
-                maptype = "hybrid", crop = T)
+		zoom = 15, source = "google",
+		maptype = "hybrid", crop = T)
 
 ggmap(ust)
 \end{verbatim}
@@ -131,10 +131,10 @@ ggmap(ust)
 loc <- geocode("2115 Summit Ave, St. Paul, MN")
 
 box <- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
-         right = loc$lon + 0.04, top = loc$lat + 0.02)
+	 right = loc$lon + 0.04, top = loc$lat + 0.02)
 
 ust_box <- get_map(location = box, source = "stamen",
-                   maptype = "watercolor", crop = T)
+		   maptype = "watercolor", crop = T)
 
 ggmap(ust_box)
 \end{verbatim}
@@ -156,11 +156,11 @@ locs <- data.frame(names = c("st. paul", "minneapolis"))
 locs <- cbind(locs, geocode(as.character(locs$names)))
 
 mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
-               zoom = 10, source = "stamen", maptype = "toner", crop = T)
+	       zoom = 10, source = "stamen", maptype = "toner", crop = T)
 
 p <- ggmap(mid)
 p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
-                    dat = locs, size = 6)
+		    dat = locs, size = 6)
 p <- p + scale_colour_discrete("Location")
 p
 \end{verbatim}
@@ -229,7 +229,7 @@ p
  \scriptsize
 \begin{verbatim}
 states <- c("minnesota", "wisconsin", "illinois", "indiana",
-            "iowa", "missouri", "michigan")
+	    "iowa", "missouri", "michigan")
 
 states_map <- map_data("state")
 
@@ -267,7 +267,7 @@ p
 \begin{verbatim}
 library(geosphere)
 arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
-                      n = steps, addStartEnd = T)
+		      n = steps, addStartEnd = T)
 \end{verbatim}
 \end{frame}
 \begin{frame}[fragile,label=sec-18]{Crossing the Date Line}
@@ -276,16 +276,16 @@ arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
 # draw great circles from St. Paul to everywhere else
 gcircles <- lapply(1:nrow(end), function(i) {
   temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
-                         n = 50, addStartEnd = T, breakAtDateLine = T)
+			 n = 50, addStartEnd = T, breakAtDateLine = T)
 
   # if temp is a list, rbind and return single data.frame
   if(is.list(temp) == T) {
     ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
-             rep(paste0("j", i), nrow(temp[[2]])))
+	     rep(paste0("j", i), nrow(temp[[2]])))
     temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
     temp$id <- ids
   }
-  
+
   ...
 })
 \end{verbatim}
@@ -296,19 +296,19 @@ gcircles <- lapply(1:nrow(end), function(i) {
 \begin{verbatim}
 p <- ggplot()
 p <- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
-                      data = world, colour = "gray10", fill = "gray95")
+		      data = world, colour = "gray10", fill = "gray95")
 p <- p + geom_line(aes(x = lon, y = lat, group = id),                      # great circles
-                   dat = gcircles, lwd = 0.4, alpha = 0.5)
+		   dat = gcircles, lwd = 0.4, alpha = 0.5)
 p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total/pi)),          # points
-                    dat = talks_agg, colour = "#555599")
+		    dat = talks_agg, colour = "#555599")
 p <- p + scale_size("Total participants\n(both events)",                   # adjust legend
-                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
-                    breaks = sqrt(c(10, 50, 100) / pi),
-                    labels = c(10, 50, 100), range = c(1, 10))
+		    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+		    breaks = sqrt(c(10, 50, 100) / pi),
+		    labels = c(10, 50, 100), range = c(1, 10))
 p <- p + theme_bw()                                                        # bw theme
 p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # tweak
-               axis.ticks = element_blank(), panel.grid = element_blank(),
-               legend.position = c(0.092, 0.15))
+	       axis.ticks = element_blank(), panel.grid = element_blank(),
+	       legend.position = c(0.092, 0.15))
 \end{verbatim}
 \normalsize
 \end{frame}
@@ -326,7 +326,37 @@ p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # twe
 \includegraphics[height=6.5cm]{./img/infographic-flattened-lo.jpg}
 \end{center}
 \end{frame}
-\begin{frame}[label=sec-22]{Getting some GPS data}
+\begin{frame}[fragile,label=sec-22]{Creating \texttt{.kml} files for Google Earth}
+ \begin{itemize}
+\item Pretty easy! (Follow along with \href{http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML}{this}, \href{http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r}{this}, and \href{http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal}{this})
+\end{itemize}
+
+\scriptsize
+\begin{verbatim}
+talks <- read.csv("./data/talk-locations.csv")
+talks <- talks[!duplicated(talks[, c("country", "city")]),
+	       c("city", "lat", "lon")]
+
+talks_sp <- talks
+coordinates(talks_sp) <- c("lon", "lat")
+proj4string(talks_sp) <- CRS("+init=epsg:4238")
+talks_ll <- spTransform(talks_sp,
+			CRS("+proj=longlat +datum=WGS84"))
+
+kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
+	  name = talks_ll$city,
+	  icon = "http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+\end{verbatim}
+\normalsize
+\end{frame}
+
+\begin{frame}[label=sec-23]{screenshot of Google Earth}
+\begin{itemize}
+\item Also create great circle data
+\end{itemize}
+\end{frame}
+
+\begin{frame}[label=sec-24]{Getting some GPS data}
 \begin{center}
 \href{https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en}{\uline{AndroSensor}}
 \end{center}
@@ -344,7 +374,7 @@ p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # twe
 \end{column}
 \end{columns}
 \end{frame}
-\begin{frame}[fragile,label=sec-23]{Reading/cleaning the data}
+\begin{frame}[fragile,label=sec-25]{Reading/cleaning the data}
  \scriptsize
 \begin{verbatim}
 gps <- read.csv("./data/gps-data.csv", sep = ";")
@@ -368,28 +398,27 @@ head(gps, 5)
 
 \normalsize
 \end{frame}
-\begin{frame}[fragile,label=sec-24]{Grab a background map}
+\begin{frame}[fragile,label=sec-26]{Grab a background map}
  \scriptsize
 
 \begin{verbatim}
 box <- c(left = min(gps$lon), bottom = min(gps$lat),
-         right = max(gps$lon), top = max(gps$lat))
+	 right = max(gps$lon), top = max(gps$lat))
 
 gps_map <- get_map(location = box, source = "stamen",
-                   maptype = "terrain", crop = T)
+		   maptype = "terrain", crop = T)
 \end{verbatim}
 
 \begin{center}
 \includegraphics[height=4cm]{./img/gps-map.pdf}
 \end{center}
 \end{frame}
-
-\begin{frame}[fragile,label=sec-25]{Overplot with speed}
+\begin{frame}[fragile,label=sec-27]{Overplot with speed}
  \scriptsize
 
 \begin{verbatim}
 p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
-                                 gps, size = 3)
+				 gps, size = 3)
 p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 \end{verbatim}
 
@@ -399,5 +428,79 @@ p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 
 \normalsize
 \end{frame}
-% Emacs 24.3.1 (Org mode 8.2.5h)
+\begin{frame}[fragile,label=sec-28]{Public transportation efficiency}
+ \begin{itemize}
+\item Background information can be found \href{https://github.com/tcrug/public-transpo}{here}
+\end{itemize}
+
+\scriptsize
+
+\begin{verbatim}
+transpo <- read.csv("./data/public-transpo.csv")
+
+transpo_agg <- ddply(transpo, .(city, state), summarize,
+		     btus_pmile_ave = mean(btus_pmile),
+		     density = mean(population) / mean(service_area_sq_mi))
+transpo_agg$lookup <- paste0(transpo_agg$city, ", ", transpo_agg$state)
+
+coords <- geocode(transpo_agg$lookup)
+
+transpo_agg <- cbind(transpo_agg, coords)
+
+# let's not run that again...
+write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F, sep = ",")
+\end{verbatim}
+\normalsize
+\end{frame}
+\begin{frame}[fragile,label=sec-29]{Efficiency visualized}
+ \scriptsize
+
+\begin{verbatim}
+plot <- read.csv("./data/transpo-agg-geocoded.csv")
+plot <- plot[plot$state != "AK" & plot$state != "HI", ]
+usa <- map_data("state")
+plot <- plot[order(plot$btus_pmile_ave), ]
+p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
+			     data = usa, fill = "gray95", colour = "gray10")
+p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
+		    size = sqrt(density)/pi), data = plot)
+p <- p + scale_colour_gradient("log(BTUs / passenger-mile)", trans = "log")
+p <- p + scale_x_continuous("") + scale_y_continuous("")
+p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
+			       labels = round((c(10, 20, 30, 40)*pi)^2, 0),
+			       range = c(1, 8))
+p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+\end{verbatim}
+
+\normalsize
+\end{frame}
+\begin{frame}[label=sec-30]{Efficiency visualized}
+\begin{center}
+\includegraphics[height=6.5cm]{./img/transpo-plot.pdf}
+\end{center}
+
+\normalsize
+\end{frame}
+
+
+\begin{frame}[label=sec-31]{ideas for remaining slides}
+\begin{itemize}
+\item 3M center with work activity (get data from timesheet app)
+\item Plot city or county transpo data on US map
+\end{itemize}
+\end{frame}
+\begin{frame}[label=sec-32]{Reference}
+\begin{itemize}
+\item \href{http://stat405.had.co.nz/ggmap.pdf}{ggmap: Spatial Visualization with ggplot2}, Kahle \& Wickham
+\item \href{http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/}{How to draw good looking maps in R}, uchicagoconsulting
+\item \href{http://www.stanford.edu/~cengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot}{Great circles on a recentered worldmap}, AnthroSpace
+\item \href{http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/}{How to map connections with great circles}, FlowingData
+\item For any given package, find the documentation on \href{http://cran.r-project.org/}{CRAN}!
+\end{itemize}
+
+\vspace{0.5cm}
+
+Code and files from this presentation are on \href{https://github.com/jwhendy/devFest-geo}{github}!
+\end{frame}
+% Emacs 24.3.1 (Org mode 8.2.5c)
 \end{document}
