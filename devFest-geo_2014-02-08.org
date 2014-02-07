@@ -40,7 +40,6 @@ library(plyr)
 
 Show you enough relatively cool things in 15min to entice you to give =R= a shot!
 
-
 * Using =ggmap= to get lat/lon coordinates
 - Just type what you wold type into Google Maps
 
@@ -49,28 +48,23 @@ Show you enough relatively cool things in 15min to entice you to give =R= a shot
 
 #+begin_src R :session r :exports both :results output :eval no :tangle yes
   # install.packages("ggmap")
-  > library(ggmap)
-  > geocode("St. Paul, MN")
-
+  library(ggmap)
+  geocode("St. Paul, MN")
 #+end_src
-
 #+RESULTS:
 :         lon     lat
 : 1 -93.08996 44.9537
 
-
 #+begin_src R :session r :exports both :results output :eval no :tangle yes
-  > geocode("2115 Summit Ave., St. Paul, MN")
+  geocode("2115 Summit Ave., St. Paul, MN")
 #+end_src
-
 #+RESULTS:
 :         lon      lat
 : 1 -93.18971 44.94412
 
 #+begin_src R :session r :exports both :results output :eval no :tangle yes
-  > geocode("University of St. Thomas, MN")
+  geocode("University of St. Thomas, MN")
 #+end_src
-
 #+RESULTS:
 :         lon      lat
 : 1 -93.18975 44.94192
@@ -106,7 +100,7 @@ ggmap(ust)
 
 #+begin_center
 #+attr_latex: :height 6.5cm
-[[./img/ust-coords-zoom.pdf]]
+[[./plots/ust-coords-zoom.pdf]]
 #+end_center
 
 * Using lat/lon + bounding box
@@ -127,34 +121,33 @@ ggmap(ust_box)
 #+end_src
 
 #+RESULTS:
-[[file:./img/ust-coords-box.pdf]]
+[[file:./plots/ust-coords-box.pdf]]
 
 * Using lat/lon + bounding box
 
 #+begin_center
 #+attr_latex: :height 6.5cm
-[[./img/ust-coords-box.pdf]]
+[[./plots/ust-coords-box.pdf]]
 #+end_center
 
-* Overplotting ggmaps
+* Overplotting maps
 
-- =ggmap()= is an addition to =ggplot2= functionality
+- =ggmap()= adds onto existing =ggplot2= functionality
 - Thus, layering standard =ggplot2= graphics on top of maps is easy!
 
 #+latex: \scriptsize
 #+header: :file ./plots/ggmap-points.pdf :height 6 :width 9
 #+begin_src R :session r :exports code :results output graphics :eval no :tangle yes
-locs <- data.frame(names = c("st. paul", "minneapolis"))
+locs <- data.frame(names = c("st. paul", "minneapolis"))                  # grab locations
 locs <- cbind(locs, geocode(as.character(locs$names)))
 
-mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
+mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),  # get a map
                zoom = 10, source = "stamen", maptype = "toner", crop = T)
 
-p <- ggmap(mid)
-p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
+p <- ggmap(mid)                                                           # plot map
+p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),        # overplot w/ points
                     dat = locs, size = 6)
 p <- p + scale_colour_discrete("Location")
-p
 #+end_src
 
 #+latex: \normalsize
@@ -163,14 +156,14 @@ p
 
 #+begin_center
 #+attr_latex: :height 6.5cm
-[[./img/ggmap-points.pdf]]
+[[./plots/ggmap-points.pdf]]
 #+end_center
 
 * Working with world/country maps
 
 - =get_map()= limited by allowable zoom levels (e.g. =0 < zoom < 21=)
-- To plot larger scale data, the =maps= package is probably preferred
-- Various maps available; see [[http://cran.r-project.org/web/packages/maps/maps.pdf][documentation]] for details
+- For larger scale data, the =maps= package is necessary
+- Various maps available; see the [[http://cran.r-project.org/web/packages/maps/maps.pdf][documentation]] 
 
 #+latex: \scriptsize
 #+begin_src R :session r :exports both :results output :eval no :tangle yes
@@ -195,7 +188,7 @@ head(map, 5)
 #+name: world-map
 #+header: :file ./plots/world.pdf :width 9 :height 6
 #+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
-# pay attention to column names (lon vs. long!)
+# pay attention to column names (long vs. lon!)
 p <- ggplot(world, aes(x = long, y = lat, group = group))
 p <- p + geom_polygon(colour = "white")
 p
@@ -204,7 +197,7 @@ p
 #+begin_center
 #+attr_latex: :height 4.5cm
 #+RESULTS: world-map
-[[file:./img/world.pdf]]
+[[file:./plots/world.pdf]]
 #+end_center
 
 #+latex: \normalsize
@@ -224,7 +217,7 @@ p
 #+begin_center
 #+attr_latex: :height 4.5cm
 #+RESULTS: usa-map
-[[file:./img/usa.pdf]]
+[[file:./plots/usa.pdf]]
 #+end_center
 
 #+latex: \normalsize
@@ -251,7 +244,7 @@ p
 
 #+begin_center
 #+attr_latex: :height 6cm
-[[file:./img/some-states.pdf]]
+[[file:./plots/some-states.pdf]]
 #+end_center
 
 * A hobby project
@@ -268,7 +261,7 @@ p
 [[./img/facebook-map-lo.png]]
 #+end_center
 
-* Great circle basics
+* Calculating great circle arcs
 
 - =gcIntermediate()= function from  =geosphere= package
 
@@ -284,20 +277,19 @@ arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
 #+latex: \scriptsize
 #+begin_src R :eval no :tangle yes :exports code
 # draw great circles from St. Paul to everywhere else
-gcircles <- lapply(1:nrow(end), function(i) {
-  temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
-                         n = 50, addStartEnd = T, breakAtDateLine = T)
+gcircles <- lapply(1:nrow(end), function(i) {                 # arc for each set
+  temp <- gcIntermediate(start[, c("lon", "lat")],
+                         end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T,
+                         breakAtDateLine = T)
 
-  # if temp is a list, rbind and return single data.frame
-  if(is.list(temp) == T) {
-    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
+  if(is.list(temp) == T) {                                    # were two half-paths returned?
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),            # if so, make id's for both halves
              rep(paste0("j", i), nrow(temp[[2]])))
-    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
-    temp$id <- ids
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))        # combine two sets of points
+    temp$id <- ids                                            # assign ids for plotting
   }
-  
   ...
-})
 
 #+end_src
 #+latex: \normalsize
@@ -407,7 +399,7 @@ p
 #+begin_center
 #+attr_latex: :height 6.5cm
 #+RESULTS: great-circles
-[[file:./img/great-circles.pdf]]
+[[file:./plots/great-circles.pdf]]
 #+end_center
 
 * Infographic
@@ -422,16 +414,15 @@ p
 
 #+latex: \scriptsize
 #+begin_src R :session r :exports code :results silent :eval no :tangle yes
-
-# create spatial projection object from data
 talks_agg$size <- 100 * talks_agg$total
 
 talks_sp <- talks_agg
-coordinates(talks_sp) <- c("lon", "lat")
-proj4string(talks_sp) <- CRS("+init=epsg:4238")
+coordinates(talks_sp) <- c("lon", "lat")                    # converts to spatial object
+proj4string(talks_sp) <- CRS("+init=epsg:4238")             # G Earth coordinate system
 talks_ll <- spTransform(talks_sp,
-                        CRS("+proj=longlat +datum=WGS84"))
+                        CRS("+proj=longlat +datum=WGS84"))  # Something else G Earth wants
 
+# open a file connection and write the data with custom icon/size/label
 kml_open("./data/talks-w-gcircles.kml")
 kml_layer.SpatialPoints(talks_ll, colour = "white", labels = city, size = total,
                         shape="http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
@@ -441,18 +432,22 @@ kml_close("./data/talks-w-gcircles.kml")
 
 * Adding great circles
 
+- A bit hackish, but manually writing the kml code works, too!
+
 #+latex: \scriptsize
 #+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
-# a bit hackish, but manually writing the kml code works, too!
+# for each point set, generate the following kml syntax
 gcircs <- lapply(1:nrow(end), function(i) {
   paste0("<Placemark><LineString><tesselate>1</tesselate><coordinates>",
          start$lon, ",", start$lat, " ", end[i, "lon"], ",", end[i, "lat"],
          "</coordinates></LineString></Placemark>") })
 
+# combine the results into a single table
 gcircs <- do.call(rbind, gcircs)
 
-# paste this after last <coordinate> in .kml file
+# print out each line of the above table
+# retult can simply be pasted after last <Placemark> in .kml file
 write.table(gcircs, row.names = F)
 
 #+end_src
@@ -516,10 +511,10 @@ kmlPoints(talks_ll["city"], kmlfile = "./data/talks-google-earth.kml",
 #+begin_src R :session r :exports both :results output :eval yes
 gps <- read.csv("./data/gps-data.csv", sep = ";")
 
-# reduce to columns of interest
+# subset to columns we're interested in
 gps <- gps[, c(10, 11, 13, 18)]
 
-# give the data sensical names
+# give the columns sensical names
 names(gps) <- c("lat", "lon", "speed", "time")
 head(gps, 5)
 #+end_src
@@ -551,7 +546,7 @@ gps_map <- get_map(location = box, source = "stamen",
 #+begin_center
 #+attr_latex: :height 4cm
 #+RESULTS: gps-map
-[[file:./img/gps-map.pdf]]
+[[file:./plots/gps-map.pdf]]
 #+end_center
 
 * Plot path and speed over a map
@@ -561,15 +556,15 @@ gps_map <- get_map(location = box, source = "stamen",
 #+name: gps-map-over
 #+header: :file ./plots/gps-map-over.pdf :width 12 :height 5
 #+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
-p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
-                                 data = gps, size = 3)
+p <- ggmap(gps_map)
+p <- p + geom_point(aes(x = lon, y = lat, colour = speed), data = gps, size = 3)
 p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 #+end_src
 
 #+begin_center
 #+attr_latex: :height 5cm
 #+RESULTS: gps-map-over
-[[file:./img/gps-map-over.pdf]]
+[[file:./plots/gps-map-over.pdf]]
 #+end_center
 
 #+latex: \normalsize
@@ -584,14 +579,14 @@ p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 #+begin_src R :session r :results silent :eval no :tangle yes
 transpo <- read.csv("./data/public-transpo.csv")
 
-transpo_agg <- ddply(transpo, .(city, state), summarize,
+transpo_agg <- ddply(transpo, .(city, state), summarize,                    # stats by state
                      btus_pmile_ave = mean(btus_pmile),
                      density = mean(population) / mean(service_area_sq_mi))
 transpo_agg$lookup <- paste0(transpo_agg$city, ", ", transpo_agg$state)
 
-coords <- geocode(transpo_agg$lookup)
+coords <- geocode(transpo_agg$lookup)                                       # city/state string
 
-transpo_agg <- cbind(transpo_agg, coords)
+transpo_agg <- cbind(transpo_agg, coords)                                   # get lat/lon
 
 # let's not run that again...
 write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F, sep = ",")
@@ -628,7 +623,7 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
 #+begin_center
 #+attr_latex: :height 6.5cm
 #+RESULTS: transpo-plot
-[[file:./img/transpo-plot.pdf]]
+[[file:./plots/transpo-plot.pdf]]
 #+end_center
 
 #+latex: \normalsize
@@ -639,7 +634,7 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
   - Calculate columns
   - Summarize, e.g. with =ddply=
 - Manipulate in R, then output to =.json=, d3's friend
-- Helpful function found [[http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/][here]]
+- Helpful function found [[http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/][here]], =toJSONarray()=
 
 #+begin_src R :session r :exports none :results silent :eval yes
 
@@ -668,9 +663,9 @@ return(res)
 #+latex: \scriptsize
 #+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
-plot_json <- toJSONarray(plot)
-file_con <- file("./d3/transpo.json")
-writeLines(plot_json, file_con)
+plot_json <- toJSONarray(plot)         # function defined in link above
+file_con <- file("./d3/transpo.json")  # create file
+writeLines(plot_json, file_con)        # write results to file
 close(file_con)
 #+end_src 
 #+latex: \normalsize
@@ -681,11 +676,56 @@ close(file_con)
 [[./img/transpo-d3.png]]
 #+end_center
 
-* todo ideas for remaining slides
+* Visualizing work activity
+- Tracked work projects with [[https://play.google.com/store/apps/details?id=com.rauscha.apps.timesheet][Timesheet]] (projects, tags, location)
 
-- 3M center with work activity (get data from timesheet app)
+#+latex: \scriptsize
+#+header: :file ./plots/mmm-timesheet.pdf :height 6 :width 7
+#+begin_src R :session r :exports code :results output graphics :eval no :tangle yes
 
-* =R= libraries used
+time <- read.csv("./data/timesheet.csv")              # read data
+time <- time[!is.na(time$Location), ]                 # remove entries w/ no loc
+mmm_box <- c(left = -93.0053, bottom = 44.9485,       # bounding box
+             right = -92.9844, top = 44.9632)
+mmm <- get_map(location = mmm_box, source = "stamen", # get map
+               maptype = "toner", crop = T)
+
+time <- ddply(time, .(Location), summarize,           # total time per loc
+              total = sum(Duration)) 
+
+# figure out building coords and merge with timesheet data
+bldgs <- data.frame(loc = time$Location))
+bldgs$lat <-  c(44.9515, 44.9576, 44.9525, 44.9545, 44.9577, 44.955,  44.9512, 44.9619, 44.9585)
+bldgs$lon <- -c(93.0033, 92.9935, 92.9955, 92.9982, 92.9998, 92.9897, 93.0009, 93.00,   92.9942)
+time <- merge(time, bldgs, by.x = "Location", by.y = "loc")
+
+# line from my main building to each of the other ones
+lines <- data.frame(lat = c(rep(bldgs[2, "lat"], 8), bldgs[c(1, 3:9), "lat"]),
+                    lon = c(rep(bldgs[2, "lon"], 8), bldgs[c(1, 3:9), "lon"]),
+                    grp = rep(1:8, 2))
+
+p <- ggmap(mmm)
+p <- p + geom_line(aes(x = lon, y = lat, group = grp),
+                   data = lines, colour = "steelblue")
+p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total)/pi),
+                    data = time, fill = "steelblue", colour = "black", pch = 21)
+p <- p + scale_x_continuous("") + scale_y_continuous("")
+p <- p + scale_size_continuous("Hours", breaks = c(0.5, 1, 1.5, 2),
+                               labels = c(2.5, 10, 20, 40), range = c(2, 6))
+p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+p
+#+end_src
+#+latex: \normalsize
+
+* Visualizing work activity
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+#+RESULTS:
+[[file:./plots/mmm-timesheet.pdf]]
+#+end_center
+
+* =R= packages used
 
 - Getting coordinates/working with Google: =ggmap=
 - Great circle paths: =geosphere=
@@ -707,7 +747,6 @@ close(file_con)
 \vspace{0.5cm}
 
 Code and files from this presentation are on [[https://github.com/jwhendy/devFest-geo][github]]!
-
 
 * Tools
 
