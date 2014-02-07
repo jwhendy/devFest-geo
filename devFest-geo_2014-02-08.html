@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Test">
+  <meta name="author" content="John Henderson">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Test</h1>
+    <h2></h2>
+    <p>John Henderson<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h1>Intro</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  Brief overview of geo-spatial miscellany in R</li>
+<li><p>Key libraries</p>
+
+<ul>
+<li>  Getting coordinates/working with Google: <code>ggmap</code></li>
+<li>  Great circle paths: <code>geosphere</code></li>
+<li>  Larger scale maps: <code>maps</code> (comes with R)</li>
+<li>  Projection conversion/KML generation: <code>rgdal</code>, <code>maptools</code>, and <code>sp</code></li>
+<li>  Plotting: <code>ggplot2</code></li>
+</ul></li>
+<li><p>This is a hobby and I&#39;m <em>not</em> a professional&#x2026;</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h1>Using <code>ggmap</code> to get lat/lon coordinates</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p>Just type what you wold type into Google Maps</p>
+
+<h1>install.packages(&quot;ggmap&quot;)</h1>
+
+<blockquote>
+<p>library(ggmap)
+geocode(&quot;St. Paul, MN&quot;)</p>
+</blockquote>
+
+<pre><code>    lon     lat
+</code></pre>
+
+<p>1 -93.08996 44.9537</p>
+
+<blockquote>
+<p>geocode(&quot;2115 Summit Ave., St. Paul, MN&quot;)</p>
+</blockquote>
+
+<pre><code>    lon      lat
+</code></pre>
+
+<p>1 -93.18971 44.94412</p>
+
+<blockquote>
+<p>geocode(&quot;University of St. Thomas, MN&quot;)</p>
+</blockquote>
+
+<pre><code>    lon      lat
+</code></pre>
+
+<p>1 -93.18975 44.94192</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h1>Grabbing maps</h1>
+  </hgroup>
+  <article data-timings="">
+    <p>Methods</p>
+
+<ul>
+<li>  Lat/lon + zoom level</li>
+<li>  Bounding box</li>
+</ul>
+
+<p>Sources</p>
+
+<ul>
+<li>  Google</li>
+<li>  Stamen</li>
+<li>  Cloudmade</li>
+<li>  OpenStreetMap</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h1>Using lat/lon + zoom</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>loc &lt;- geocode(&quot;2115 Summit Ave, St. Paul, MN&quot;)
+ust &lt;- get_map(location = c(lon = loc$lon, lat = loc$lat),
+                zoom = 15, source = &quot;google&quot;,
+                maptype = &quot;hybrid&quot;, crop = T)
+
+ggmap(ust)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-5" style="background:;">
+  <hgroup>
+    <h1>Using lat/lon + zoom</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/ust-coords-zoom.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-6" style="background:;">
+  <hgroup>
+    <h1>Using lat/lon + bounding box</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>loc &lt;- geocode(&quot;2115 Summit Ave, St. Paul, MN&quot;)
+
+box &lt;- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
+         right = loc$lon + 0.04, top = loc$lat + 0.02)
+
+ust_box &lt;- get_map(location = box, source = &quot;stamen&quot;,
+                   maptype = &quot;watercolor&quot;, crop = T)
+
+ggmap(ust_box)
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-7" style="background:;">
+  <hgroup>
+    <h1>Using lat/lon + bounding box</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/ust-coords-box.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-8" style="background:;">
+  <hgroup>
+    <h1>Overplotting ggmaps</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  <code>ggmap()</code> is an addition to <code>ggplot2</code> functionality</li>
+<li><p>Thus, layering standard <code>ggplot2</code> graphics on top of maps is easy!</p>
+
+<p>locs &lt;- data.frame(names = c(&quot;st. paul&quot;, &quot;minneapolis&quot;))
+locs &lt;- cbind(locs, geocode(as.character(locs$names)))</p>
+
+<p>mid &lt;- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
+               zoom = 10, source = &quot;stamen&quot;, maptype = &quot;toner&quot;, crop = T)</p>
+
+<p>p &lt;- ggmap(mid)
+p &lt;- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
+                    dat = locs, size = 6)
+p &lt;- p + scale_colour_discrete(&quot;Location&quot;)
+p</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-9" style="background:;">
+  <hgroup>
+    <h1>Overplotting ggmaps</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/ggmap-points.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-10" style="background:;">
+  <hgroup>
+    <h1>Working with world/contry maps</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  <code>get_map()</code> limited by allowable zoom levels (e.g. <code>0 &lt; zoom &lt; 21</code>)</li>
+<li>  To plot larger scale data, the <code>maps</code> package is probably preferred</li>
+<li><p>Various maps available; see <a href="http://cran.r-project.org/web/packages/maps/maps.pdf">documentation</a> for details</p>
+
+<p>library(maps)
+world &lt;- map_data(&quot;world&quot;)
+head(map, 5)</p>
+
+<pre><code>   long      lat group order region subregion
+</code></pre>
+
+<p>1 -133.3664 58.42416     1     1 Canada      <NA>
+2 -132.2681 57.16308     1     2 Canada      <NA>
+3 -132.0498 56.98610     1     3 Canada      <NA>
+4 -131.8797 56.74001     1     4 Canada      <NA>
+5 -130.2492 56.09945     1     5 Canada      <NA></p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-11" style="background:;">
+  <hgroup>
+    <h1>World map example</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code># pay attention to column names (lon vs. long!)
+p &lt;- ggplot(world, aes(x = long, y = lat, group = group))
+p &lt;- p + geom_polygon(colour = &quot;white&quot;)
+p
+</code></pre>
+
+<div class="center">
+<./img/world.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-12" style="background:;">
+  <hgroup>
+    <h1>United States example</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>usa &lt;- map_data(&quot;state&quot;)
+p &lt;- ggplot(usa, aes(x = long, y = lat, group = group))
+p &lt;- p + geom_polygon(colour = &quot;white&quot;)
+p
+</code></pre>
+
+<div class="center">
+<./img/usa.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-13" style="background:;">
+  <hgroup>
+    <h1>Subsetting areas</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>states &lt;- c(&quot;minnesota&quot;, &quot;wisconsin&quot;, &quot;illinois&quot;, &quot;indiana&quot;,
+            &quot;iowa&quot;, &quot;missouri&quot;, &quot;michigan&quot;)
+
+states_map &lt;- map_data(&quot;state&quot;)
+
+states_map &lt;- states_map[states_map$region %in% states, ]
+
+p &lt;- ggplot(states_map, aes(x = long, y = lat, group = group))
+p &lt;- p + geom_polygon(colour = &quot;white&quot;)
+p
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-14" style="background:;">
+  <hgroup>
+    <h1>Subsetting areas</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/some-states.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-15" style="background:;">
+  <hgroup>
+    <h1>A hobby project</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  Internal talks at 3M typically given live to US audience; recorded for int&#39;l</li>
+<li>  Organized two &quot;reverse talks&quot; to reach a wider global audience</li>
+<li>  Attendance records shattered</li>
+<li>  Wanted to visualize impact/reach!</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-16" style="background:;">
+  <hgroup>
+    <h1>The inspiration</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+![nil](./img/facebook-map-lo.png)
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-17" style="background:;">
+  <hgroup>
+    <h1>Great circle basics</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p><code>gcIntermediate()</code> function from  <code>geosphere</code> package</p>
+
+<p>library(geosphere)
+arc &lt;- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
+                      n = steps, addStartEnd = T)</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-18" style="background:;">
+  <hgroup>
+    <h1>Crossing the Date Line</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code># draw great circles from St. Paul to everywhere else
+gcircles &lt;- lapply(1:nrow(end), function(i) {
+  temp &lt;- gcIntermediate(start[, c(&quot;lon&quot;, &quot;lat&quot;)], end[i, c(&quot;lon&quot;, &quot;lat&quot;)],
+                         n = 50, addStartEnd = T, breakAtDateLine = T)
+
+  # if temp is a list, rbind and return single data.frame
+  if(is.list(temp) == T) {
+    ids &lt;- c(rep(paste0(&quot;i&quot;, i), nrow(temp[[1]])),
+             rep(paste0(&quot;j&quot;, i), nrow(temp[[2]])))
+    temp &lt;- as.data.frame(rbind(temp[[1]], temp[[2]]))
+    temp$id &lt;- ids
+  }
+
+  ...
+})
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-19" style="background:;">
+  <hgroup>
+    <h1>The plot</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>p &lt;- ggplot()
+p &lt;- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
+                      data = world, colour = &quot;gray10&quot;, fill = &quot;gray95&quot;)
+p &lt;- p + geom_line(aes(x = lon, y = lat, group = id),                      # great circles
+                   dat = gcircles, lwd = 0.4, alpha = 0.5)
+p &lt;- p + geom_point(aes(x = lon, y = lat, size = sqrt(total/pi)),          # points
+                    dat = talks_agg, colour = &quot;#555599&quot;)
+p &lt;- p + scale_size(&quot;Total participants\n(both events)&quot;,                   # adjust legend
+                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+                    breaks = sqrt(c(10, 50, 100) / pi),
+                    labels = c(10, 50, 100), range = c(1, 10))
+p &lt;- p + theme_bw()                                                        # bw theme
+p &lt;- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # tweak
+               axis.ticks = element_blank(), panel.grid = element_blank(),
+               legend.position = c(0.092, 0.15))
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-20" style="background:;">
+  <hgroup>
+    <h1>The result</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/great-circles.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-21" style="background:;">
+  <hgroup>
+    <h1>Infographic</h1>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="./img/infographic-flattened-lo.jpg" height="700px" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-22" style="background:;">
+  <hgroup>
+    <h1>Creating <code>.kml</code> files for Google Earth</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p>Pretty easy! (Follow along with <a href="http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML">this</a>, <a href="http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r">this</a>, and <a href="http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal">this</a>)</p>
+
+<p>talks &lt;- read.csv(&quot;./data/talk-locations.csv&quot;)
+talks &lt;- talks[!duplicated(talks[, c(&quot;country&quot;, &quot;city&quot;)]),
+               c(&quot;city&quot;, &quot;lat&quot;, &quot;lon&quot;)]</p>
+
+<p>talks_sp &lt;- talks
+coordinates(talks_sp) &lt;- c(&quot;lon&quot;, &quot;lat&quot;)
+proj4string(talks_sp) &lt;- CRS(&quot;+init=epsg:4238&quot;)
+talks_ll &lt;- spTransform(talks_sp,
+                        CRS(&quot;+proj=longlat +datum=WGS84&quot;))</p>
+
+<p>kmlPoints(g_earth_ll[&quot;city&quot;], kmlfile = &quot;./data/talks-google-earth.kml&quot;,
+          name = talks_ll$city,
+          icon = &quot;<a href="http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png%22">http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png&quot;</a>)</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-23" style="background:;">
+  <hgroup>
+    <h1>todo screenshot of Google Earth</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  Also create great circle data</li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-24" style="background:;">
+  <hgroup>
+    <h1>Getting some GPS data</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+[<span class="underline">AndroSensor</span>](https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en)
+</div>
+
+<ol>
+<li><pre><code>  :B_column:BMCOL:
+</code></pre>
+
+<div class="center">
+![nil](./img/andro-main.png)
+</div></li>
+<li><pre><code>  :B_column:BMCOL:
+</code></pre>
+
+<div class="center">
+![nil](./img/andro-sensors.png)
+</div></li>
+</ol>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-25" style="background:;">
+  <hgroup>
+    <h1>Reading/cleaning the data</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>gps &lt;- read.csv(&quot;./data/gps-data.csv&quot;, sep = &quot;;&quot;)
+
+# reduce to columns of interest
+gps &lt;- gps[, c(10, 11, 13, 18)]
+
+# give the data sensical names
+names(gps) &lt;- c(&quot;lat&quot;, &quot;lon&quot;, &quot;speed&quot;, &quot;time&quot;)
+head(gps, 5)
+
+       lat       lon speed time
+1 44.92633 -93.09771    NA    5
+2 44.92633 -93.09771    NA  505
+3 44.92633 -93.09771    NA 1011
+4 44.92633 -93.09771    NA 1532
+5 44.92626 -93.09747     0 2032
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-26" style="background:;">
+  <hgroup>
+    <h1>Grab a background map</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>box &lt;- c(left = min(gps$lon), bottom = min(gps$lat),
+         right = max(gps$lon), top = max(gps$lat))
+
+gps_map &lt;- get_map(location = box, source = &quot;stamen&quot;,
+                   maptype = &quot;terrain&quot;, crop = T)
+</code></pre>
+
+<div class="center">
+<./img/gps-map.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-27" style="background:;">
+  <hgroup>
+    <h1>Overplot with speed</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>p &lt;- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
+                                 gps, size = 3)
+p &lt;- p + scale_colour_continuous(low = &quot;black&quot;, high = &quot;red&quot;, na.value = NA)
+</code></pre>
+
+<div class="center">
+<./img/gps-map-over.pdf>
+</div>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-28" style="background:;">
+  <hgroup>
+    <h1>Public transportation efficiency</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li><p>Background information can be found <a href="https://github.com/tcrug/public-transpo">here</a></p>
+
+<p>transpo &lt;- read.csv(&quot;./data/public-transpo.csv&quot;)</p>
+
+<p>transpo_agg &lt;- ddply(transpo, .(city, state), summarize,
+                     btus_pmile_ave = mean(btus_pmile),
+                     density = mean(population) / mean(service_area_sq_mi))
+transpo_agg$lookup &lt;- paste0(transpo_agg$city, &quot;, &quot;, transpo_agg$state)</p>
+
+<p>coords &lt;- geocode(transpo_agg$lookup)</p>
+
+<p>transpo_agg &lt;- cbind(transpo_agg, coords)</p>
+
+<h1>let&#39;s not run that again...</h1>
+
+<p>write.table(transpo_agg, file = &quot;./data/transpo-agg-geocoded.csv&quot;, row.names = F, sep = &quot;,&quot;)</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-29" style="background:;">
+  <hgroup>
+    <h1>Efficiency visualized</h1>
+  </hgroup>
+  <article data-timings="">
+    <pre><code>plot &lt;- read.csv(&quot;./data/transpo-agg-geocoded.csv&quot;)
+plot &lt;- plot[plot$state != &quot;AK&quot; &amp; plot$state != &quot;HI&quot;, ]
+usa &lt;- map_data(&quot;state&quot;)
+plot &lt;- plot[order(plot$btus_pmile_ave), ]
+p &lt;- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
+                             data = usa, fill = &quot;gray95&quot;, colour = &quot;gray10&quot;)
+p &lt;- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
+                    size = sqrt(density)/pi), data = plot)
+p &lt;- p + scale_colour_gradient(&quot;log(BTUs / passenger-mile)&quot;, trans = &quot;log&quot;)
+p &lt;- p + scale_x_continuous(&quot;&quot;) + scale_y_continuous(&quot;&quot;)
+p &lt;- p + scale_size_continuous(&quot;Passengers / Sq. Mile&quot;, breaks = c(10, 20, 30, 40),
+                               labels = round((c(10, 20, 30, 40)*pi)^2, 0),
+                               range = c(1, 8))
+p &lt;- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-30" style="background:;">
+  <hgroup>
+    <h1>Efficiency visualized</h1>
+  </hgroup>
+  <article data-timings="">
+    <div class="center">
+<./img/transpo-plot.pdf>
+</div>
+
+<h1>Converting data to <code>.json</code> for d3</h1>
+
+<ul>
+<li>  R is an excellent for working with data
+
+<ul>
+<li>  Reshape (wide &harr; long)</li>
+<li>  Calculate columns</li>
+<li>  Summarize, e.g. with <code>ddply</code></li>
+</ul></li>
+<li>  Manipulate in R, then output to <code>.json</code>, d3&#39;s friend</li>
+<li><p>Helpful function found <a href="http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/">here</a></p>
+
+<p>plot_json &lt;- toJSONarray(plot)
+file_con &lt;- file(&quot;./d3/transpo.json&quot;)
+writeLines(plot_json, file_con)
+close(file_con)</p></li>
+</ul>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-31" style="background:;">
+  <hgroup>
+    <h1>And voila, a d3 version!</h1>
+  </hgroup>
+  <article data-timings="">
+    <p><img src="./img/transpo-d3.png" alt="nil"></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-32" style="background:;">
+  <hgroup>
+    <h1>Reference</h1>
+  </hgroup>
+  <article data-timings="">
+    <ul>
+<li>  <a href="http://stat405.had.co.nz/ggmap.pdf">ggmap: Spatial Visualization with ggplot2</a>, Kahle \&amp; Wickham</li>
+<li>  <a href="http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/">How to draw good looking maps in R</a>, uchicagoconsulting</li>
+<li>  <a href="http://www.stanford.edu/%7Ecengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot">Great circles on a recentered worldmap</a>, AnthroSpace</li>
+<li>  <a href="http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/">How to map connections with great circles</a>, FlowingData</li>
+<li>  For any given package, find the documentation on <a href="http://cran.r-project.org/">CRAN</a>!</li>
+</ul>
+
+<p>Code and files from this presentation are on <a href="https://github.com/jwhendy/devFest-geo">github</a></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='Intro'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Using <code>ggmap</code> to get lat/lon coordinates'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Grabbing maps'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='Using lat/lon + zoom'>
+         4
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=5 title='Using lat/lon + zoom'>
+         5
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=6 title='Using lat/lon + bounding box'>
+         6
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=7 title='Using lat/lon + bounding box'>
+         7
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=8 title='Overplotting ggmaps'>
+         8
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=9 title='Overplotting ggmaps'>
+         9
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=10 title='Working with world/contry maps'>
+         10
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=11 title='World map example'>
+         11
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=12 title='United States example'>
+         12
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=13 title='Subsetting areas'>
+         13
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=14 title='Subsetting areas'>
+         14
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=15 title='A hobby project'>
+         15
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=16 title='The inspiration'>
+         16
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=17 title='Great circle basics'>
+         17
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=18 title='Crossing the Date Line'>
+         18
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=19 title='The plot'>
+         19
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=20 title='The result'>
+         20
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=21 title='Infographic'>
+         21
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=22 title='Creating <code>.kml</code> files for Google Earth'>
+         22
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=23 title='todo screenshot of Google Earth'>
+         23
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=24 title='Getting some GPS data'>
+         24
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=25 title='Reading/cleaning the data'>
+         25
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=26 title='Grab a background map'>
+         26
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=27 title='Overplot with speed'>
+         27
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=28 title='Public transportation efficiency'>
+         28
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=29 title='Efficiency visualized'>
+         29
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=30 title='Efficiency visualized'>
+         30
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=31 title='And voila, a d3 version!'>
+         31
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=32 title='Reference'>
+         32
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
