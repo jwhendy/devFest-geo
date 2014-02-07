@@ -1,4 +1,4 @@
-% Created 2014-02-06 Thu 18:41
+% Created 2014-02-07 Fri 00:39
 \documentclass[sans,aspectratio=169,presentation,bigger,fleqn]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -39,22 +39,18 @@
 
 \begin{frame}[fragile,label=sec-1]{Intro}
  \begin{itemize}
-\item Brief overview of geo-spatial miscellany in R
-\item Key libraries
-\begin{itemize}
-\item Getting coordinates/working with Google: \texttt{ggmap}
-\item Great circle paths: \texttt{geosphere}
-\item Larger scale maps: \texttt{maps} (comes with R)
-\item Projection conversion/KML generation: \texttt{rgdal}, \texttt{maptools}, and \texttt{sp}
-\item Plotting: \texttt{ggplot2}
+\item Rapid fire overview of geo-spatial miscellany in \texttt{R}
+\item If you're not familiar with \texttt{R}, don't worry about the code
+\item The code/data necessary to reproduce anything in this talk is all on \href{https://github.com/jwhendy/devFest-geo}{github}!
 \end{itemize}
-\end{itemize}
-\pause
 
-\begin{itemize}
-\item This is a hobby and I'm \emph{not} a professional\ldots{}
-\end{itemize}
+\vspace{1cm} \pause
+
+\alert{My goal}
+
+Show you enough relatively cool things in 15min to entice you to give \texttt{R} a shot!
 \end{frame}
+
 \begin{frame}[fragile,label=sec-2]{Using \texttt{ggmap} to get lat/lon coordinates}
  \begin{itemize}
 \item Just type what you wold type into Google Maps
@@ -172,7 +168,7 @@ p
 \includegraphics[height=6.5cm]{./img/ggmap-points.pdf}
 \end{center}
 \end{frame}
-\begin{frame}[fragile,label=sec-10]{Working with world/contry maps}
+\begin{frame}[fragile,label=sec-10]{Working with world/country maps}
  \begin{itemize}
 \item \texttt{get\_map()} limited by allowable zoom levels (e.g. \texttt{0 < zoom < 21})
 \item To plot larger scale data, the \texttt{maps} package is probably preferred
@@ -328,35 +324,49 @@ p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # twe
 \end{frame}
 \begin{frame}[fragile,label=sec-22]{Creating \texttt{.kml} files for Google Earth}
  \begin{itemize}
-\item Pretty easy! (Follow along with \href{http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML}{this}, \href{http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r}{this}, and \href{http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal}{this})
+\item Pretty easy! (Follow along with \href{http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML}{this}, \href{http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r}{this}, \href{http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal}{this}, and \href{http://gsif.isric.org/doku.php?id=wiki:tutorial_plotkml}{this})
 \end{itemize}
 
 \scriptsize
 \begin{verbatim}
-talks <- read.csv("./data/talk-locations.csv")
-talks <- talks[!duplicated(talks[, c("country", "city")]),
-               c("city", "lat", "lon")]
+# create spatial projection object from data
+talks_agg$size <- 100 * talks_agg$total
 
-talks_sp <- talks
+talks_sp <- talks_agg
 coordinates(talks_sp) <- c("lon", "lat")
 proj4string(talks_sp) <- CRS("+init=epsg:4238")
 talks_ll <- spTransform(talks_sp,
                         CRS("+proj=longlat +datum=WGS84"))
 
-kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
-          name = talks_ll$city,
-          icon = "http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+kml_open("./data/talks-w-gcircles.kml")
+kml_layer.SpatialPoints(talks_ll, colour = "white", labels = city, size = total,
+                        shape="http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+kml_close("./data/talks-w-gcircles.kml")
 \end{verbatim}
 \normalsize
 \end{frame}
+\begin{frame}[fragile,label=sec-23]{Adding great circles}
+ \scriptsize
+\begin{verbatim}
+# a bit hackish, but manually writing the kml code works, too!
+gcircs <- lapply(1:nrow(end), function(i) {
+  paste0("<Placemark><LineString><tesselate>1</tesselate><coordinates>",
+         start$lon, ",", start$lat, " ", end[i, "lon"], ",", end[i, "lat"],
+         "</coordinates></LineString></Placemark>") })
 
-\begin{frame}[label=sec-23]{screenshot of Google Earth}
-\begin{itemize}
-\item Also create great circle data
-\end{itemize}
+gcircs <- do.call(rbind, gcircs)
+
+# paste this after last <coordinate> in .kml file
+write.table(gcircs, row.names = F)
+\end{verbatim}
+\normalsize
 \end{frame}
-
-\begin{frame}[label=sec-24]{Getting some GPS data}
+\begin{frame}[fragile,label=sec-24]{\texttt{.kml} file in Google Earth}
+ \begin{center}
+\includegraphics[height=6.5cm]{./img/talks-w-gcircles-kml.png}
+\end{center}
+\end{frame}
+\begin{frame}[label=sec-25]{Getting some GPS data}
 \begin{center}
 \href{https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en}{\uline{AndroSensor}}
 \end{center}
@@ -374,7 +384,7 @@ kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
 \end{column}
 \end{columns}
 \end{frame}
-\begin{frame}[fragile,label=sec-25]{Reading/cleaning the data}
+\begin{frame}[fragile,label=sec-26]{Reading/cleaning the data}
  \scriptsize
 \begin{verbatim}
 gps <- read.csv("./data/gps-data.csv", sep = ";")
@@ -398,27 +408,12 @@ head(gps, 5)
 
 \normalsize
 \end{frame}
-\begin{frame}[fragile,label=sec-26]{Grab a background map}
- \scriptsize
-
-\begin{verbatim}
-box <- c(left = min(gps$lon), bottom = min(gps$lat),
-         right = max(gps$lon), top = max(gps$lat))
-
-gps_map <- get_map(location = box, source = "stamen",
-                   maptype = "terrain", crop = T)
-\end{verbatim}
-
-\begin{center}
-\includegraphics[height=4cm]{./img/gps-map.pdf}
-\end{center}
-\end{frame}
-\begin{frame}[fragile,label=sec-27]{Overplot with speed}
+\begin{frame}[fragile,label=sec-27]{Plot path and speed over a map}
  \scriptsize
 
 \begin{verbatim}
 p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
-                                 gps, size = 3)
+                                 data = gps, size = 3)
 p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 \end{verbatim}
 
@@ -464,7 +459,7 @@ p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
                              data = usa, fill = "gray95", colour = "gray10")
 p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
                     size = sqrt(density)/pi), data = plot)
-p <- p + scale_colour_gradient("log(BTUs / passenger-mile)", trans = "log")
+p <- p + scale_colour_gradient("BTUs / passenger-mile", trans = "log")
 p <- p + scale_x_continuous("") + scale_y_continuous("")
 p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
                                labels = round((c(10, 20, 30, 40)*pi)^2, 0),
@@ -481,7 +476,6 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
 
 \normalsize
 \end{frame}
-
 \begin{frame}[fragile,label=sec-31]{Converting data to \texttt{.json} for d3}
  \begin{itemize}
 \item R is an excellent for working with data
@@ -512,22 +506,50 @@ close(file_con)
 \begin{frame}[label=sec-33]{ideas for remaining slides}
 \begin{itemize}
 \item 3M center with work activity (get data from timesheet app)
-\item Re-populate references
-\item Possibly mention tools (emacs, orgmode\ldots{})
 \end{itemize}
 \end{frame}
-\begin{frame}[label=sec-34]{Reference}
-\begin{itemize}
+\begin{frame}[fragile,label=sec-34]{\texttt{R} libraries used}
+ \begin{itemize}
+\item Getting coordinates/working with Google: \texttt{ggmap}
+\item Great circle paths: \texttt{geosphere}
+\item Larger scale maps: \texttt{maps}
+\item Projection conversion/KML output: \texttt{rgdal}, \texttt{maptools}, \texttt{sp}, and \texttt{plotKML}
+\item Summary computations on data: \texttt{ddply()} function from \texttt{plyr}
+\item Reshaping data (wide \(\leftrightarrow\) long): \texttt{reshape2}
+\item Plotting: \texttt{ggplot2}
+\end{itemize}
+\end{frame}
+\begin{frame}[fragile,label=sec-35]{References}
+ \begin{itemize}
 \item \href{http://stat405.had.co.nz/ggmap.pdf}{ggmap: Spatial Visualization with ggplot2}, Kahle \& Wickham
 \item \href{http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/}{How to draw good looking maps in R}, uchicagoconsulting
 \item \href{http://www.stanford.edu/~cengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot}{Great circles on a recentered worldmap}, AnthroSpace
 \item \href{http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/}{How to map connections with great circles}, FlowingData
-\item For any given package, find the documentation on \href{http://cran.r-project.org/}{CRAN}!
+\item \href{http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal}{SO question on creating \texttt{.kml} files}
+\item For any given package, find the documentation on \href{http://cran.r-project.org/}{CRAN}
 \end{itemize}
 
 \vspace{0.5cm}
 
 Code and files from this presentation are on \href{https://github.com/jwhendy/devFest-geo}{github}!
+\end{frame}
+
+\begin{frame}[label=sec-36]{Tools}
+Presentation made entirely with open source software!
+
+\begin{center}
+\begin{center}
+\begin{tabular}{llll}
+\includegraphics[height=1.5cm]{./img/emacs.png} & \includegraphics[height=1.5cm]{./img/org-mode.png} & \includegraphics[height=1.5cm]{./img/r.png} & \includegraphics[height=1.5cm]{./img/arch.png}\\
+\end{tabular}
+\end{center}
+\end{center}
+
+\begin{itemize}
+\item \href{http://www.gnu.org/software/emacs/}{Emacs} and \href{http://orgmode.org/}{Org-mode} for reproducible code environment
+\item \href{http://www.latex-project.org/}{\LaTeX} / \href{http://www.ctan.org/tex-archive/macros/latex/contrib/beamer/}{Beamer} for typesetting
+\item \href{http://blog.barisione.org/2007-09/torino-a-pretty-theme-for-latex-beamer/}{Torino} Beamer theme so that it wasn't obvious I was using Beamer
+\end{itemize}
 \end{frame}
 % Emacs 24.3.1 (Org mode 8.2.5h)
 \end{document}

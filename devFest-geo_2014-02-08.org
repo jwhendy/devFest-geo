@@ -28,16 +28,18 @@ library(plyr)
 
 * Intro
 
-- Brief overview of geo-spatial miscellany in R
-- Key libraries
-  - Getting coordinates/working with Google: =ggmap=
-  - Great circle paths: =geosphere=
-  - Larger scale maps: =maps= (comes with R)
-  - Projection conversion/KML generation: =rgdal=, =maptools=, and =sp=
-  - Plotting: =ggplot2=
-\pause
 
-- This is a hobby and I'm /not/ a professional...
+
+- Rapid fire overview of geo-spatial miscellany in =R=
+- If you're not familiar with =R=, don't worry about the code
+- The code/data necessary to reproduce anything in this talk is all on [[https://github.com/jwhendy/devFest-geo][github]]!
+
+\vspace{1cm} \pause
+
+*My goal*
+
+Show you enough relatively cool things in 15min to entice you to give =R= a shot!
+
 
 * Using =ggmap= to get lat/lon coordinates
 - Just type what you wold type into Google Maps
@@ -45,7 +47,7 @@ library(plyr)
 
 #+latex: \scriptsize
 
-#+begin_src R :session r :exports both :results output :eval no
+#+begin_src R :session r :exports both :results output :eval no :tangle yes
   # install.packages("ggmap")
   > library(ggmap)
   > geocode("St. Paul, MN")
@@ -57,7 +59,7 @@ library(plyr)
 : 1 -93.08996 44.9537
 
 
-#+begin_src R :session r :exports both :results output :eval no
+#+begin_src R :session r :exports both :results output :eval no :tangle yes
   > geocode("2115 Summit Ave., St. Paul, MN")
 #+end_src
 
@@ -65,7 +67,7 @@ library(plyr)
 :         lon      lat
 : 1 -93.18971 44.94412
 
-#+begin_src R :session r :exports both :results output :eval no
+#+begin_src R :session r :exports both :results output :eval no :tangle yes
   > geocode("University of St. Thomas, MN")
 #+end_src
 
@@ -88,8 +90,8 @@ Sources
 
 * Using lat/lon + zoom
 
-#+header: :file ./img/ust-coords-zoom.pdf :width 8 :height 8
-#+begin_src R :session r :exports code :results silent :eval no
+#+header: :file ./plots/ust-coords-zoom.pdf :width 8 :height 8
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
 loc <- geocode("2115 Summit Ave, St. Paul, MN")
 ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
@@ -109,8 +111,8 @@ ggmap(ust)
 
 * Using lat/lon + bounding box
 
-#+header: :file ./img/ust-coords-box.pdf :width 8 :height 6
-#+begin_src R :session r :exports code :results output graphics :eval no
+#+header: :file ./plots/ust-coords-box.pdf :width 8 :height 6
+#+begin_src R :session r :exports code :results output graphics :eval no :tangle yes
 
 loc <- geocode("2115 Summit Ave, St. Paul, MN")
 
@@ -140,8 +142,8 @@ ggmap(ust_box)
 - Thus, layering standard =ggplot2= graphics on top of maps is easy!
 
 #+latex: \scriptsize
-#+header: :file ./img/ggmap-points.pdf :height 6 :width 9
-#+begin_src R :session r :exports code :results output graphics :eval no
+#+header: :file ./plots/ggmap-points.pdf :height 6 :width 9
+#+begin_src R :session r :exports code :results output graphics :eval no :tangle yes
 locs <- data.frame(names = c("st. paul", "minneapolis"))
 locs <- cbind(locs, geocode(as.character(locs$names)))
 
@@ -164,14 +166,14 @@ p
 [[./img/ggmap-points.pdf]]
 #+end_center
 
-* Working with world/contry maps
+* Working with world/country maps
 
 - =get_map()= limited by allowable zoom levels (e.g. =0 < zoom < 21=)
 - To plot larger scale data, the =maps= package is probably preferred
 - Various maps available; see [[http://cran.r-project.org/web/packages/maps/maps.pdf][documentation]] for details
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports both :results output :eval no
+#+begin_src R :session r :exports both :results output :eval no :tangle yes
 
 library(maps)
 world <- map_data("world")
@@ -191,8 +193,8 @@ head(map, 5)
 
 #+latex: \scriptsize
 #+name: world-map
-#+header: :file ./img/world.pdf :width 9 :height 6
-#+begin_src R :session r :exports both :results output graphics :eval no
+#+header: :file ./plots/world.pdf :width 9 :height 6
+#+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
 # pay attention to column names (lon vs. long!)
 p <- ggplot(world, aes(x = long, y = lat, group = group))
 p <- p + geom_polygon(colour = "white")
@@ -211,8 +213,8 @@ p
 
 #+latex: \scriptsize
 #+name: usa-map
-#+header: :file ./img/usa.pdf :width 9 :height 6
-#+begin_src R :session r :exports both :results output graphics :eval no
+#+header: :file ./plots/usa.pdf :width 9 :height 6
+#+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
 usa <- map_data("state")
 p <- ggplot(usa, aes(x = long, y = lat, group = group))
 p <- p + geom_polygon(colour = "white")
@@ -231,8 +233,8 @@ p
 
 #+latex: \scriptsize
 #+name: some-states
-#+header: :file ./img/some-states.pdf :width 6 :height 6
-#+begin_src R :session r :exports code :results graphics :eval no
+#+header: :file ./plots/some-states.pdf :width 6 :height 6
+#+begin_src R :session r :exports code :results graphics :eval no :tangle yes
 states <- c("minnesota", "wisconsin", "illinois", "indiana",
             "iowa", "missouri", "michigan")
 
@@ -271,7 +273,7 @@ p
 - =gcIntermediate()= function from  =geosphere= package
 
 #+latex: \scriptsize
-#+begin_src R :eval no
+#+begin_src R :eval no :tangle yes
 library(geosphere)
 arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
                       n = steps, addStartEnd = T)
@@ -280,7 +282,7 @@ arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
 * Crossing the Date Line
 
 #+latex: \scriptsize
-#+begin_src R :eval no :exports code
+#+begin_src R :eval no :tangle yes :exports code
 # draw great circles from St. Paul to everywhere else
 gcircles <- lapply(1:nrow(end), function(i) {
   temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
@@ -303,7 +305,7 @@ gcircles <- lapply(1:nrow(end), function(i) {
 * The plot
 
 #+latex: \scriptsize
-#+begin_src R :eval no :exports code
+#+begin_src R :eval no :tangle yes :exports code
 p <- ggplot()
 p <- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
                       data = world, colour = "gray10", fill = "gray95")
@@ -324,8 +326,8 @@ p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # twe
 * The result
 
 #+name: great-circles
-#+header: :file ./img/great-circles.pdf :width 13 :height 7
-#+begin_src R :session r :exports results :results output graphics :eval no
+#+header: :file ./plots/great-circles.pdf :width 13 :height 7
+#+begin_src R :session r :exports results :results output graphics :eval no :tangle yes
 
 talks <- read.csv("./data/talk-locations.csv")
 head(talks, 5)
@@ -416,29 +418,72 @@ p
 #+end_center
 
 * Creating =.kml= files for Google Earth
-- Pretty easy! (Follow along with [[http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML][this]], [[http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r][this]], and [[http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal][this]])
+- Pretty easy! (Follow along with [[http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML][this]], [[http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r][this]], [[http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal][this]], and [[http://gsif.isric.org/doku.php?id=wiki:tutorial_plotkml][this]])
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports code :results silent :eval no
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
-talks <- read.csv("./data/talk-locations.csv")
-talks <- talks[!duplicated(talks[, c("country", "city")]),
-               c("city", "lat", "lon")]
+# create spatial projection object from data
+talks_agg$size <- 100 * talks_agg$total
 
-talks_sp <- talks
+talks_sp <- talks_agg
 coordinates(talks_sp) <- c("lon", "lat")
 proj4string(talks_sp) <- CRS("+init=epsg:4238")
 talks_ll <- spTransform(talks_sp,
                         CRS("+proj=longlat +datum=WGS84"))
 
-kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
+kml_open("./data/talks-w-gcircles.kml")
+kml_layer.SpatialPoints(talks_ll, colour = "white", labels = city, size = total,
+                        shape="http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+kml_close("./data/talks-w-gcircles.kml")
+#+end_src
+#+latex: \normalsize
+
+* Adding great circles
+
+#+latex: \scriptsize
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
+
+# a bit hackish, but manually writing the kml code works, too!
+gcircs <- lapply(1:nrow(end), function(i) {
+  paste0("<Placemark><LineString><tesselate>1</tesselate><coordinates>",
+         start$lon, ",", start$lat, " ", end[i, "lon"], ",", end[i, "lat"],
+         "</coordinates></LineString></Placemark>") })
+
+gcircs <- do.call(rbind, gcircs)
+
+# paste this after last <coordinate> in .kml file
+write.table(gcircs, row.names = F)
+
+#+end_src
+#+latex: \normalsize
+
+* Another method for generation .kml				   :noexport:
+
+#+latex: \scriptsize
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
+
+talks_agg$size <- 10 * (sqrt(talks_agg$total)/pi)
+
+talks_sp <- talks_agg
+coordinates(talks_sp) <- c("lon", "lat")
+proj4string(talks_sp) <- CRS("+init=epsg:4238")
+talks_ll <- spTransform(talks_sp,
+                        CRS("+proj=longlat +datum=WGS84"))
+
+kmlPoints(talks_ll["city"], kmlfile = "./data/talks-google-earth.kml",
           name = talks_ll$city,
           icon = "http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
 
 #+end_src
 #+latex: \normalsize
-* todo screenshot of Google Earth
-- Also create great circle data
+* =.kml= file in Google Earth
+
+#+begin_center
+#+attr_latex: :height 6.5cm
+[[./img/talks-w-gcircles-kml.png]]
+#+end_center
+
 * Getting some GPS data
 
 #+begin_center
@@ -489,13 +534,13 @@ head(gps, 5)
 
 #+latex: \normalsize
 
-* Grab a background map
+* Grab a background map						   :noexport:
 
 #+latex: \scriptsize
 
 #+name: gps-map
-#+header: :file ./img/gps-map.pdf :width 9 :height 4
-#+begin_src R :session r :exports both :results output graphics :eval no
+#+header: :file ./plots/gps-map.pdf :width 9 :height 4
+#+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
 box <- c(left = min(gps$lon), bottom = min(gps$lat),
          right = max(gps$lon), top = max(gps$lat))
 
@@ -509,15 +554,15 @@ gps_map <- get_map(location = box, source = "stamen",
 [[file:./img/gps-map.pdf]]
 #+end_center
 
-* Overplot with speed
+* Plot path and speed over a map
 
 #+latex: \scriptsize
 
 #+name: gps-map-over
-#+header: :file ./img/gps-map-over.pdf :width 12 :height 5
-#+begin_src R :session r :exports both :results output graphics :eval no
+#+header: :file ./plots/gps-map-over.pdf :width 12 :height 5
+#+begin_src R :session r :exports both :results output graphics :eval no :tangle yes
 p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
-                                 gps, size = 3)
+                                 data = gps, size = 3)
 p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 #+end_src
 
@@ -536,7 +581,7 @@ p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
 #+latex: \scriptsize
 
 #+name: transpo
-#+begin_src R :session r :results silent :eval no
+#+begin_src R :session r :results silent :eval no :tangle yes
 transpo <- read.csv("./data/public-transpo.csv")
 
 transpo_agg <- ddply(transpo, .(city, state), summarize,
@@ -558,8 +603,8 @@ write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F
 #+latex: \scriptsize
 
 #+name: transpo-plot
-#+header: :file ./img/transpo-plot.pdf :width 11 :height 6
-#+begin_src R :session r :results output graphics :exports both :eval no
+#+header: :file ./plots/transpo-plot.pdf :width 11 :height 6
+#+begin_src R :session r :results output graphics :exports both :eval no :tangle yes
 plot <- read.csv("./data/transpo-agg-geocoded.csv")
 plot <- plot[plot$state != "AK" & plot$state != "HI", ]
 usa <- map_data("state")
@@ -568,7 +613,7 @@ p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
                              data = usa, fill = "gray95", colour = "gray10")
 p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
                     size = sqrt(density)/pi), data = plot)
-p <- p + scale_colour_gradient("log(BTUs / passenger-mile)", trans = "log")
+p <- p + scale_colour_gradient("BTUs / passenger-mile", trans = "log")
 p <- p + scale_x_continuous("") + scale_y_continuous("")
 p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
                                labels = round((c(10, 20, 30, 40)*pi)^2, 0),
@@ -587,7 +632,6 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
 #+end_center
 
 #+latex: \normalsize
-
 
 * Converting data to =.json= for d3
 - R is an excellent for working with data
@@ -622,7 +666,7 @@ return(res)
 #+end_src
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports code :results silent :eval no
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
 plot_json <- toJSONarray(plot)
 file_con <- file("./d3/transpo.json")
@@ -640,19 +684,41 @@ close(file_con)
 * todo ideas for remaining slides
 
 - 3M center with work activity (get data from timesheet app)
-- Re-populate references
-- Possibly mention tools (emacs, orgmode...)
 
-* Reference
+* =R= libraries used
+
+- Getting coordinates/working with Google: =ggmap=
+- Great circle paths: =geosphere=
+- Larger scale maps: =maps=
+- Projection conversion/KML output: =rgdal=, =maptools=, =sp=, and =plotKML=
+- Summary computations on data: =ddply()= function from =plyr=
+- Reshaping data (wide \leftrightarrow long): =reshape2=
+- Plotting: =ggplot2=
+
+* References
 
 - [[http://stat405.had.co.nz/ggmap.pdf][ggmap: Spatial Visualization with ggplot2]], Kahle \& Wickham
 - [[http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/][How to draw good looking maps in R]], uchicagoconsulting
 - [[http://www.stanford.edu/~cengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot][Great circles on a recentered worldmap]], AnthroSpace
 - [[http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/][How to map connections with great circles]], FlowingData
-- For any given package, find the documentation on [[http://cran.r-project.org/][CRAN]]!
+- [[http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal][SO question on creating =.kml= files]]
+- For any given package, find the documentation on [[http://cran.r-project.org/][CRAN]]
 
 \vspace{0.5cm}
 
 Code and files from this presentation are on [[https://github.com/jwhendy/devFest-geo][github]]!
 
 
+* Tools
+
+Presentation made entirely with open source software!
+
+#+begin_center
+#+attr_latex: :booktabs nil
+| <10>       | <10>       | <10>       | <10>       |
+| \includegraphics[height=1.5cm]{./img/emacs.png} | \includegraphics[height=1.5cm]{./img/org-mode.png} | \includegraphics[height=1.5cm]{./img/r.png} | \includegraphics[height=1.5cm]{./img/arch.png} |
+#+end_center
+
+- [[http://www.gnu.org/software/emacs/][Emacs]] and [[http://orgmode.org/][Org-mode]] for reproducible code environment
+- [[http://www.latex-project.org/][\LaTeX]] / [[http://www.ctan.org/tex-archive/macros/latex/contrib/beamer/][Beamer]] for typesetting
+- [[http://blog.barisione.org/2007-09/torino-a-pretty-theme-for-latex-beamer/][Torino]] Beamer theme so that it wasn't obvious I was using Beamer
