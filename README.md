@@ -1,4 +1,4 @@
-This repository goes along with a [http://devfest.mn/](Google DevFest) talk I gave on geospatial data. There's not much else to say, as the code is all available in the [commented R markdown](https://github.com/jwhendy/devFest-geo/blob/master/devFest-geo_2014-02-08.Rmd) file which you can use with [RStudio](http://www.rstudio.com/).
+This repository goes along with a [Google DevFest](http://devfest.mn/) talk I gave on geospatial data. There's not much else to say, as the code is all available in the [commented R markdown](https://github.com/jwhendy/devFest-geo/blob/master/devFest-geo_2014-02-08.Rmd) file which you can use with [RStudio](http://www.rstudio.com/).
 
 The `.pdf` presentation is also in the repository, and the `plots/` directory contains all of the plots that were generated from this R code.
 
