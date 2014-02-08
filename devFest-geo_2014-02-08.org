@@ -6,7 +6,6 @@
 #+startup: beamer
 #+latex_class_options: [sans,aspectratio=169,presentation,bigger,fleqn]
 #+options: H:1
-#+latex_header: %\usetheme{naked}
 #+latex_header: \usepackage{lmodern}
 #+latex_header: \usetheme[alternativetitlepage=true,titleline=true]{Torino}
 #+latex_header: \usecolortheme{freewilly}
@@ -30,6 +29,7 @@ library(plyr)
 - Rapid fire overview of geo-spatial miscellany in =R=
 - If you're not familiar with =R=, don't worry about the code
 - The code/data necessary to reproduce anything in this talk is all on [[https://github.com/jwhendy/devFest-geo][github]]!
+  - https://github.com/jwhendy/devFest-geo
 
 \vspace{1cm} \pause
 
@@ -649,7 +649,7 @@ close(file_con)
     "lookup" : "Abilene, TX", "lon" : -99.73, "lat" : 32.45 }, ...
 #+end_src 
 #+latex: \normalsize
-* And voila, a d3 version!
+* And voil\(\`{a}\), a d3 version!
 
 #+begin_center
 #+attr_latex: :height 6.5cm
