@@ -38,7 +38,7 @@ library(plyr)
 Show you enough relatively cool things in 15min to entice you to give =R= a shot!
 
 * Using =ggmap= to get lat/lon coordinates
-- Just type what you wold type into Google Maps
+- Just use what you would type into Google Maps
 
 
 #+latex: \scriptsize
@@ -374,7 +374,7 @@ p <- p + geom_point(aes(x = lon, y = lat,
                     size = sqrt(total/pi)), dat = talks_agg,
                     colour = "#555599")
 
-# set label for legend; rescale sizes/lagels for area vs. diameter
+# set label for legend; rescale sizes/labels for area vs. diameter
 p <- p + scale_size("Total participants\n(both events)",
                     limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
                     breaks = sqrt(c(10, 50, 100) / pi),
@@ -626,44 +626,27 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
 #+latex: \normalsize
 
 * Converting data to =.json= for d3
-- R is an excellent for working with data
+- R is an excellent environment for working with data
   - Reshape (wide \leftrightarrow long)
   - Calculate columns
   - Summarize, e.g. with =ddply=
-- Manipulate in R, then output to =.json=, d3's friend
-- Helpful function found [[http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/][here]], =toJSONarray()=
-
-#+begin_src R :session r :exports none :results silent :eval yes
-
-toJSONarray <- function(dtf){
-clnms <- colnames(dtf)
-
-name.value <- function(i){
-quote <- '';
-if(class(dtf[, i])!='numeric'){
-quote <- '"';
-}
-
-paste('"', i, '" : ', quote, dtf[,i], quote, sep='')
-}
-
-objs <- apply(sapply(clnms, name.value), 1, function(x){paste(x, collapse=', ')})
-objs <- paste('{', objs, '}')
-
-res <- paste('[', paste(objs, collapse=', '), ']')
-
-return(res)
-}
-
-#+end_src
+- Manipulate in R, output to =.json= with [[http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/][this]] or =jsonlite= [[http://cran.r-project.org/web/packages/jsonlite/][package]]
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports code :results silent :eval no :tangle yes
+#+begin_src R :session r :exports code :results silent :eval no
 
-plot_json <- toJSONarray(plot)         # function defined in link above
+library(jsonlite)
+plot_json <- toJSON(plot)              # convert with jsonlite
 file_con <- file("./d3/transpo.json")  # create file
 writeLines(plot_json, file_con)        # write results to file
 close(file_con)
+#+end_src
+#+latex: \normalsize
+
+#+latex: \scriptsize
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
+[ { "city" : "Abilene", "state" : "TX", "btus_pmile_ave" : 13574.1, "density" : 2547.39,
+    "lookup" : "Abilene, TX", "lon" : -99.73, "lat" : 32.45 }, ...
 #+end_src 
 #+latex: \normalsize
 * And voila, a d3 version!
@@ -785,3 +768,4 @@ Presentation made entirely with open source software!
 #+begin_center
 Questions?
 #+end_center
+ 

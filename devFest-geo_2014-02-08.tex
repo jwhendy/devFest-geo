@@ -1,4 +1,4 @@
-% Created 2014-02-08 Sat 00:54
+% Created 2014-02-08 Sat 08:35
 \documentclass[sans,aspectratio=169,presentation,bigger,fleqn]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -52,7 +52,7 @@ Show you enough relatively cool things in 15min to entice you to give \texttt{R}
 \end{frame}
 \begin{frame}[fragile,label=sec-2]{Using \texttt{ggmap} to get lat/lon coordinates}
  \begin{itemize}
-\item Just type what you wold type into Google Maps
+\item Just use what you would type into Google Maps
 \end{itemize}
 
 
@@ -455,22 +455,29 @@ write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F
 \end{frame}
 \begin{frame}[fragile,label=sec-30]{Converting data to \texttt{.json} for d3}
  \begin{itemize}
-\item R is an excellent for working with data
+\item R is an excellent environment for working with data
 \begin{itemize}
 \item Reshape (wide \(\leftrightarrow\) long)
 \item Calculate columns
 \item Summarize, e.g. with \texttt{ddply}
 \end{itemize}
-\item Manipulate in R, then output to \texttt{.json}, d3's friend
-\item Helpful function found \href{http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/}{here}, \texttt{toJSONarray()}
+\item Manipulate in R, output to \texttt{.json} with \href{http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/}{this} or \texttt{jsonlite} \href{http://cran.r-project.org/web/packages/jsonlite/}{package}
 \end{itemize}
 
 \scriptsize
 \begin{verbatim}
-plot_json <- toJSONarray(plot)         # function defined in link above
+library(jsonlite)
+plot_json <- toJSON(plot)              # convert with jsonlite
 file_con <- file("./d3/transpo.json")  # create file
 writeLines(plot_json, file_con)        # write results to file
 close(file_con)
+\end{verbatim}
+\normalsize
+
+\scriptsize
+\begin{verbatim}
+[ { "city" : "Abilene", "state" : "TX", "btus_pmile_ave" : 13574.1, "density" : 2547.39,
+    "lookup" : "Abilene, TX", "lon" : -99.73, "lat" : 32.45 }, ...
 \end{verbatim}
 \normalsize
 \end{frame}
