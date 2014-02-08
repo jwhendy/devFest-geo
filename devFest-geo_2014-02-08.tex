@@ -1,4 +1,4 @@
-% Created 2014-02-07 Fri 17:32
+% Created 2014-02-08 Sat 00:54
 \documentclass[sans,aspectratio=169,presentation,bigger,fleqn]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -446,36 +446,14 @@ write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F
 \end{verbatim}
 \normalsize
 \end{frame}
-\begin{frame}[fragile,label=sec-29]{Efficiency visualized}
- \scriptsize
-
-\begin{verbatim}
-plot <- read.csv("./data/transpo-agg-geocoded.csv")
-plot <- plot[plot$state != "AK" & plot$state != "HI", ]
-usa <- map_data("state")
-plot <- plot[order(plot$btus_pmile_ave), ]
-p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
-                             data = usa, fill = "gray95", colour = "gray10")
-p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
-                    size = sqrt(density)/pi), data = plot)
-p <- p + scale_colour_gradient("BTUs / passenger-mile", trans = "log")
-p <- p + scale_x_continuous("") + scale_y_continuous("")
-p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
-                               labels = round((c(10, 20, 30, 40)*pi)^2, 0),
-                               range = c(1, 8))
-p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
-\end{verbatim}
-
-\normalsize
-\end{frame}
-\begin{frame}[label=sec-30]{Efficiency visualized}
+\begin{frame}[label=sec-29]{Efficiency visualized}
 \begin{center}
 \includegraphics[height=6.5cm]{./plots/transpo-plot.pdf}
 \end{center}
 
 \normalsize
 \end{frame}
-\begin{frame}[fragile,label=sec-31]{Converting data to \texttt{.json} for d3}
+\begin{frame}[fragile,label=sec-30]{Converting data to \texttt{.json} for d3}
  \begin{itemize}
 \item R is an excellent for working with data
 \begin{itemize}
@@ -497,12 +475,12 @@ close(file_con)
 \normalsize
 \end{frame}
 
-\begin{frame}[label=sec-32]{And voila, a d3 version!}
+\begin{frame}[label=sec-31]{And voila, a d3 version!}
 \begin{center}
 \includegraphics[height=6.5cm]{./img/transpo-d3.png}
 \end{center}
 \end{frame}
-\begin{frame}[fragile,label=sec-33]{Visualizing work activity}
+\begin{frame}[fragile,label=sec-32]{Visualizing work activity}
  \begin{itemize}
 \item Tracked work projects with \href{https://play.google.com/store/apps/details?id=com.rauscha.apps.timesheet}{Timesheet} (projects, tags, location)
 \end{itemize}
@@ -510,12 +488,6 @@ close(file_con)
 \scriptsize
 \begin{verbatim}
 time <- read.csv("./data/timesheet.csv")              # read data
-time <- time[!is.na(time$Location), ]                 # remove entries w/ no loc
-mmm_box <- c(left = -93.0053, bottom = 44.9485,       # bounding box
-             right = -92.9844, top = 44.9632)
-mmm <- get_map(location = mmm_box, source = "stamen", # get map
-               maptype = "toner", crop = T)
-
 time <- ddply(time, .(Location), summarize,           # total time per loc
               total = sum(Duration)) 
 
@@ -525,30 +497,22 @@ bldgs$lat <-  c(44.9515, 44.9576, 44.9525, 44.9545, 44.9577, 44.955,  44.9512, 4
 bldgs$lon <- -c(93.0033, 92.9935, 92.9955, 92.9982, 92.9998, 92.9897, 93.0009, 93.00,   92.9942)
 time <- merge(time, bldgs, by.x = "Location", by.y = "loc")
 
-# line from my main building to each of the other ones
+# line from my building to each of the other ones
 lines <- data.frame(lat = c(rep(bldgs[2, "lat"], 8), bldgs[c(1, 3:9), "lat"]),
-                    lon = c(rep(bldgs[2, "lon"], 8), bldgs[c(1, 3:9), "lon"]),
-                    grp = rep(1:8, 2))
-
-p <- ggmap(mmm)
-p <- p + geom_line(aes(x = lon, y = lat, group = grp),
-                   data = lines, colour = "steelblue")
-p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total)/pi),
-                    data = time, fill = "steelblue", colour = "black", pch = 21)
-p <- p + scale_x_continuous("") + scale_y_continuous("")
-p <- p + scale_size_continuous("Hours", breaks = c(0.5, 1, 1.5, 2),
-                               labels = c(2.5, 10, 20, 40), range = c(2, 6))
-p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
-p
+                    lon = c(rep(bldgs[2, "lon"], 8), bldgs[c(1, 3:9), "lon"]), grp = rep(1:8, 2))
 \end{verbatim}
 \normalsize
+
+
+\scriptsize
+\normalsize
 \end{frame}
-\begin{frame}[label=sec-34]{Visualizing work activity}
+\begin{frame}[label=sec-33]{Visualizing work activity}
 \begin{center}
-\includegraphics[height=6.5cm]{./plots/mmm-timesheet.pdf}
+\includegraphics[height=6.7cm]{./plots/mmm-timesheet.pdf}
 \end{center}
 \end{frame}
-\begin{frame}[fragile,label=sec-35]{\texttt{R} packages used}
+\begin{frame}[fragile,label=sec-34]{\texttt{R} packages used}
  \begin{itemize}
 \item Getting coordinates/working with Google: \texttt{ggmap}
 \item Great circle paths: \texttt{geosphere}
@@ -559,7 +523,7 @@ p
 \item Plotting: \texttt{ggplot2}
 \end{itemize}
 \end{frame}
-\begin{frame}[fragile,label=sec-36]{References}
+\begin{frame}[fragile,label=sec-35]{References}
  \begin{itemize}
 \item \href{http://stat405.had.co.nz/ggmap.pdf}{ggmap: Spatial Visualization with ggplot2}, Kahle \& Wickham
 \item \href{http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/}{How to draw good looking maps in R}, uchicagoconsulting
@@ -573,7 +537,7 @@ p
 
 Code and files from this presentation are on \href{https://github.com/jwhendy/devFest-geo}{github}!
 \end{frame}
-\begin{frame}[label=sec-37]{Tools}
+\begin{frame}[label=sec-36]{Tools}
 Presentation made entirely with open source software!
 
 \begin{center}
@@ -589,6 +553,13 @@ Presentation made entirely with open source software!
 \item \href{http://www.latex-project.org/}{\LaTeX} / \href{http://www.ctan.org/tex-archive/macros/latex/contrib/beamer/}{Beamer} for typesetting
 \item \href{http://blog.barisione.org/2007-09/torino-a-pretty-theme-for-latex-beamer/}{Torino} Beamer theme so that it wasn't obvious I was using Beamer
 \end{itemize}
+\end{frame}
+
+\begin{frame}[label=sec-37]{}
+\LARGE
+\begin{center}
+Questions?
+\end{center}
 \end{frame}
 % Emacs 24.3.1 (Org mode 8.2.5h)
 \end{document}

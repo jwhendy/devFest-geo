@@ -26,17 +26,17 @@ var svg = d3.select("body").append("svg")
     .attr("height", height);
 
 // maximum btus_pmile_ave
-var maxR = 106246;
+var maxB = 106246;
 
 // maximum passengers/sq. mile
 var maxD = 19783
 
 var rScale = d3.scale.sqrt()
-  .domain([0, maxR])
-  .range([0, 25]);
+  .domain([0, maxD])
+  .range([1, 20]);
 
 var cScale = d3.scale.log()
-  .domain([1, maxD])
+  .domain([1, maxB])
   .range(["blue", "red"]);
 
 queue()
@@ -62,10 +62,10 @@ function ready(error, us, transpo) {
       .data(transpo)
     .enter().append("circle")
       .attr("transform", function(d) {return "translate(" + projection([d.lon,d.lat]) + ")"; })
-      .attr("r", function(d) {return rScale(d.btus_pmile_ave); })
-      .style("fill", function(d) {return cScale(d.density); })
+      .attr("r", function(d) {return rScale(d.density); })
+      .style("fill", function(d) {return cScale(d.btus_pmile_ave); })
       .on("mouseover", function() { d3.select(this).style("fill", "#AA33FF"); })
-      .on("mouseout", function() { d3.select(this).style("fill", function(d) {return cScale(d.density); } ); })
+      .on("mouseout", function() { d3.select(this).style("fill", function(d) {return cScale(d.btus_pmile_ave); } ); })
       .append("title")
         .text(function(d) { return d.city ;} );
 
