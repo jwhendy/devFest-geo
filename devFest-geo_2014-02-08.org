@@ -767,5 +767,11 @@ Presentation made entirely with open source software!
 #+latex: \LARGE
 #+begin_center
 Questions?
+
+\vspace{1.5cm}
+
+#+latex: \normalsize
+Come say "Hi" at the [[http://www.meetup.com/twincitiesrug/][TC R Users Group]] to learn more :)
+
 #+end_center
  
