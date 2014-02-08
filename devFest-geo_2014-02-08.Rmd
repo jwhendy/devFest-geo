@@ -1,455 +1,480 @@
----
-title       : Test
-subtitle    : 
-author      : John Henderson
-job         : 
-framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
-highlighter : highlight.js  # {highlight.js, prettify, highlight}
-hitheme     : tomorrow      # 
-widgets     : []            # {mathjax, quiz, bootstrap}
-mode        : selfcontained # {standalone, draft}
----
+Code walkthrough
+===
 
-# Intro
+The code used for all examples in my Google DevFest presentation are contained in this file, along with comments to help you get started. Start off by installing/loading the requisite packages:
 
--   Brief overview of geo-spatial miscellany in R
--   Key libraries
-    -   Getting coordinates/working with Google: `ggmap`
-    -   Great circle paths: `geosphere`
-    -   Larger scale maps: `maps` (comes with R)
-    -   Projection conversion/KML generation: `rgdal`, `maptools`, and `sp`
-    -   Plotting: `ggplot2`
+```{r}
+install.packages("ggmap")
+install.packages("maps")
+install.packages("geosphere")
+install.packages("rgdal")
+install.packages("maptools")
+install.packages("ggplot2")
+install.packages("plyr")
+install.packages("jsonlite")
 
--   This is a hobby and I'm *not* a professional&#x2026;
+library(ggmap)
+library(maps)
+library(geosphere)
+library(rgdal)
+library(maptools)
+library(ggplot2)
+library(plyr)
+library(jsonlite)
+```
 
----
+# Translating string location to lat/lon
 
-# Using `ggmap` to get lat/lon coordinates
+First up, to get latitude and longitude values for a location, just type what you wold type into Google Maps via the `geocode()` function in the `ggmap` package:
 
--   Just type what you wold type into Google Maps
 
-    # install.packages("ggmap")
-    > library(ggmap)
-    > geocode("St. Paul, MN")
+```{r }
+  geocode("St. Paul, MN")
 
-            lon     lat
-    1 -93.08996 44.9537
+  geocode("2115 Summit Ave., St. Paul, MN")
 
-    > geocode("2115 Summit Ave., St. Paul, MN")
+  geocode("University of St. Thomas, MN")
+```
 
-            lon      lat
-    1 -93.18971 44.94412
+# Getting maps
 
-    > geocode("University of St. Thomas, MN")
+You can grab map images via a 1) center location/zoom level or 2) bounding box (min/mas lat and lon). You can pull from four different source: Google, Stamen, Cloudmade, and OpenStreeMaps.
 
-            lon      lat
-    1 -93.18975 44.94192
+Get a lat/lon to use as the center, then grab a satellite map from Google.
 
----
+```{r }
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
+ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
+                zoom = 15, source = "google",
+                maptype = "hybrid", crop = T)
 
-# Grabbing maps
+# plot the map you grabbed
+ggmap(ust)
+```
 
-Methods
--   Lat/lon + zoom level
--   Bounding box
+If we specify borders, we can get a non-square map:
 
-Sources
+```{r }
+# same center location
+loc <- geocode("2115 Summit Ave, St. Paul, MN")
 
--   Google
--   Stamen
--   Cloudmade
--   OpenStreetMap
+# now we calculate our borders with +/- lat and +/- lon values
+box <- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
+         right = loc$lon + 0.04, top = loc$lat + 0.02)
 
----
+# pulling from stamen this time with a nice watercolor style
+ust_box <- get_map(location = box, source = "stamen",
+                   maptype = "watercolor", crop = T)
 
-# Using lat/lon + zoom
+ggmap(ust_box)
+```
 
-    
-    loc <- geocode("2115 Summit Ave, St. Paul, MN")
-    ust <- get_map(location = c(lon = loc$lon, lat = loc$lat),
-                    zoom = 15, source = "google",
-                    maptype = "hybrid", crop = T)
-    
-    ggmap(ust)
+# Overplotting maps
 
----
-
-# Using lat/lon + zoom
-
-<div class="center">
-<./img/ust-coords-zoom.pdf>
-</div>
-
----
-
-# Using lat/lon + bounding box
-
-    
-    loc <- geocode("2115 Summit Ave, St. Paul, MN")
-    
-    box <- c(left = loc$lon - 0.04, bottom = loc$lat - 0.02,
-             right = loc$lon + 0.04, top = loc$lat + 0.02)
-    
-    ust_box <- get_map(location = box, source = "stamen",
-                       maptype = "watercolor", crop = T)
-    
-    ggmap(ust_box)
-
----
-
-# Using lat/lon + bounding box
-
-<div class="center">
-<./img/ust-coords-box.pdf>
-</div>
-
----
-
-# Overplotting ggmaps
-
--   `ggmap()` is an addition to `ggplot2` functionality
+-   `ggmap()` adds onto existing `ggplot2` functionality
 -   Thus, layering standard `ggplot2` graphics on top of maps is easy!
 
-    locs <- data.frame(names = c("st. paul", "minneapolis"))
-    locs <- cbind(locs, geocode(as.character(locs$names)))
-    
-    mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),
-                   zoom = 10, source = "stamen", maptype = "toner", crop = T)
-    
-    p <- ggmap(mid)
-    p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),
-                        dat = locs, size = 6)
-    p <- p + scale_colour_discrete("Location")
-    p
+```{r }
+locs <- data.frame(names = c("st. paul", "minneapolis"))                  # grab locations
+locs <- cbind(locs, geocode(as.character(locs$names)))
 
----
+mid <- get_map(location = c(lon = mean(locs$lon), lat = mean(locs$lat)),  # get a map
+               zoom = 10, source = "stamen", maptype = "toner", crop = T)
 
-# Overplotting ggmaps
+p <- ggmap(mid)                                                           # plot map
+p <- p + geom_point(aes(x = lon, y = lat, colour = factor(names)),        # overplot w/ points
+                    dat = locs, size = 6)
+p <- p + scale_colour_discrete("Location")
+```
 
-<div class="center">
-<./img/ggmap-points.pdf>
-</div>
+# Working with world/country maps
 
----
+If you need bigger data, `get_map()` won't work since the sources only have a certain allowable zoom level.
 
-# Working with world/contry maps
+```{r }
+# get map of the world
+world <- map_data("world")
 
--   `get_map()` limited by allowable zoom levels (e.g. `0 < zoom < 21`)
--   To plot larger scale data, the `maps` package is probably preferred
--   Various maps available; see [documentation](http://cran.r-project.org/web/packages/maps/maps.pdf) for details
+# get a sense for what that data looks like
+head(map, 5)
+tail(map, 5)
 
-    
-    library(maps)
-    world <- map_data("world")
-    head(map, 5)
+# plotting world map with ggplot2
+# pay attention to column names (long vs. lon!)
+p <- ggplot(world, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+```
 
-           long      lat group order region subregion
-    1 -133.3664 58.42416     1     1 Canada      <NA>
-    2 -132.2681 57.16308     1     2 Canada      <NA>
-    3 -132.0498 56.98610     1     3 Canada      <NA>
-    4 -131.8797 56.74001     1     4 Canada      <NA>
-    5 -130.2492 56.09945     1     5 Canada      <NA>
+There's also a `state` data set to plot the US with state borders.
 
----
+```{r usa-map}
+usa <- map_data("state")
+p <- ggplot(usa, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+```
 
-# World map example
+Perhaps you want to only plot a subset of states?
 
-    # pay attention to column names (lon vs. long!)
-    p <- ggplot(world, aes(x = long, y = lat, group = group))
-    p <- p + geom_polygon(colour = "white")
-    p
+```{r some-states}
+# make vector of desired states
+states <- c("minnesota", "wisconsin", "illinois", "indiana",
+            "iowa", "missouri", "michigan")
 
-<div class="center">
-<./img/world.pdf>
-</div>
+# get the full state map data
+states_map <- map_data("state")
 
----
+# use R's subsetting abilities to keep only what's in our list above
+states_map <- states_map[states_map$region %in% states, ]
 
-# United States example
+# plot
+p <- ggplot(states_map, aes(x = long, y = lat, group = group))
+p <- p + geom_polygon(colour = "white")
+p
+```
 
-    usa <- map_data("state")
-    p <- ggplot(usa, aes(x = long, y = lat, group = group))
-    p <- p + geom_polygon(colour = "white")
-    p
 
-<div class="center">
-<./img/usa.pdf>
-</div>
+# Example: great circle data
 
----
+3M has internal technology "clubs" (called chapters), which organize talks around various technologies. Typically these are given in the US and recorded for later viewing by OUS colleagues. We got a request to do this in reverse instead: give a talk at 6am Central Time in order to make it more appealing for OUS viewers and record for the US.
 
-# Subsetting areas
+The belief was that a live talk would gather far more attendees, and the belief proved true! We did two talks like this and they shattered attendance records! I wanted to make an infographic to help encourage other chapters to use this method, and got the attendance record data (country and # viewers) and did it!
 
-    states <- c("minnesota", "wisconsin", "illinois", "indiana",
-                "iowa", "missouri", "michigan")
-    
-    states_map <- map_data("state")
-    
-    states_map <- states_map[states_map$region %in% states, ]
-    
-    p <- ggplot(states_map, aes(x = long, y = lat, group = group))
-    p <- p + geom_polygon(colour = "white")
-    p
+To start, I found the `gcIntermediate()` function from  `geosphere` package, which will calcualte a great circle arc between two locations. The syntax is fairly simple:
 
----
+```{r eval=FALSE}
+library(geosphere)
+arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
+                      n = steps, addStartEnd = T)
+```
 
-# Subsetting areas
+If you have points that cross the Date Line, R will return two sets of arc points instead of one. We have to catch this and put the two sets in a format compatible with plotting later. This is that part of the code:
 
-<div class="center">
-<./img/some-states.pdf>
-</div>
+```{r }
+# draw great circles from St. Paul to everywhere else
+gcircles <- lapply(1:nrow(end), function(i) {                 # arc for each set
+  temp <- gcIntermediate(start[, c("lon", "lat")],
+                         end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T,
+                         breakAtDateLine = T)
 
----
+  if(is.list(temp) == T) {                                    # were two half-paths returned?
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),            # if so, make id's for both halves
+             rep(paste0("j", i), nrow(temp[[2]])))
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))        # combine two sets of points
+    temp$id <- ids                                            # assign ids for plotting
+  }
+  ...
+```
 
-# A hobby project
 
--   Internal talks at 3M typically given live to US audience; recorded for int'l
--   Organized two "reverse talks" to reach a wider global audience
--   Attendance records shattered
--   Wanted to visualize impact/reach!
+Here's the full plot to create a map with points sized according to attendees and great circle arcs connecting St. Paul to each location.
 
----
+```{r great-circles}
+# load data
+talks <- read.csv("./data/talk-locations.csv")
 
-# The inspiration
+# total live viewers as well as those who watched the recording later
+talks$total <- talks$live + talks$rec
 
-<div class="center">
-![nil](./img/facebook-map-lo.png)
-</div>
+# there were two talks, so we join each city/country's records from both talks
+# into a single row per location.
+talks_agg <- ddply(talks, .(country, city), summarize,
+                   total = sum(total), lat = lat[1], lon = lon[1])
 
----
+# for the arcs, the start will always be St. Paul so we split that out
+start <- talks_agg[talks_agg$city == "Saint Paul", ]
+end <- talks_agg[talks_agg$city != "Saint Paul", ]
 
-# Great circle basics
+# draw great circles from St. Paul to everywhere else
+gcircles <- lapply(1:nrow(end), function(i) {
+  temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
+                         n = 50, addStartEnd = T, breakAtDateLine = T)
 
--   `gcIntermediate()` function from  `geosphere` package
+  # if temp is a list, rbind and return single list
+  if(is.list(temp) == T) {
+    ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
+             rep(paste0("j", i), nrow(temp[[2]])))
+    temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
+    temp$id <- ids
+  }
 
-    library(geosphere)
-    arc <- gcIntermediate(c(lon_1, lat_1), c(lon_2, lat_2),
-                          n = steps, addStartEnd = T)
+  else {
+    ids <- rep(paste0("i", i), nrow(temp))
+    temp <- as.data.frame(temp)
+    temp$id <- ids
+  }
+  
+  return(temp)
+  
+})
 
----
+# lapply returns a list of the results; combine into a single table
+gcircles <- do.call(rbind, gcircles)
 
-# Crossing the Date Line
+# get map data and remove the way south stuff we don't need
+world <- map_data("world")
+world <- world[world$lat > -57, ]
 
-    # draw great circles from St. Paul to everywhere else
-    gcircles <- lapply(1:nrow(end), function(i) {
-      temp <- gcIntermediate(start[, c("lon", "lat")], end[i, c("lon", "lat")],
-                             n = 50, addStartEnd = T, breakAtDateLine = T)
-    
-      # if temp is a list, rbind and return single data.frame
-      if(is.list(temp) == T) {
-        ids <- c(rep(paste0("i", i), nrow(temp[[1]])),
-                 rep(paste0("j", i), nrow(temp[[2]])))
-        temp <- as.data.frame(rbind(temp[[1]], temp[[2]]))
-        temp$id <- ids
-      }
-      
-      ...
-    })
+# initialize a ggplot object; need to do it this way since
+# we're using independent layers that don't share same aes params
+p <- ggplot()
 
----
+# plot the world map
+p <- p + geom_polygon(aes(x = long, y = lat, group = group),
+                      data = world, colour = "gray10",
+                      fill = "gray95")
 
-# The plot
+# plot the great circles
+p <- p + geom_line(aes(x = lon, y = lat, group = id),
+                   dat = gcircles, lwd = 0.4, alpha = 0.5)
 
-    p <- ggplot()
-    p <- p + geom_polygon(aes(x = long, y = lat, group = group),               # world map
-                          data = world, colour = "gray10", fill = "gray95")
-    p <- p + geom_line(aes(x = lon, y = lat, group = id),                      # great circles
-                       dat = gcircles, lwd = 0.4, alpha = 0.5)
-    p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total/pi)),          # points
-                        dat = talks_agg, colour = "#555599")
-    p <- p + scale_size("Total participants\n(both events)",                   # adjust legend
-                        limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
-                        breaks = sqrt(c(10, 50, 100) / pi),
-                        labels = c(10, 50, 100), range = c(1, 10))
-    p <- p + theme_bw()                                                        # bw theme
-    p <- p + theme(axis.text = element_blank(), axis.title = element_blank(),  # tweak
-                   axis.ticks = element_blank(), panel.grid = element_blank(),
-                   legend.position = c(0.092, 0.15))
+# plot points, sized by area
+p <- p + geom_point(aes(x = lon, y = lat,
+                    size = sqrt(total/pi)), dat = talks_agg,
+                    colour = "#555599")
 
----
+# set label for legend; rescale sizes/labels for area vs. diameter
+p <- p + scale_size("Total participants\n(both events)",
+                    limits = c(0, max(sqrt(talks_agg$total / pi)) + 1),
+                    breaks = sqrt(c(10, 50, 100) / pi),
+                    labels = c(10, 50, 100), range = c(1, 10))
+p <- p + theme_bw()
 
-# The result
-
-<div class="center">
-<./img/great-circles.pdf>
-</div>
-
----
-
-# Infographic
-
-<img src="./img/infographic-flattened-lo.jpg" height="700px" />
-
----
+# gets rid of axis text/ticks, moves legend to lower left vs. right side
+p <- p + theme(axis.text = element_blank(),
+               axis.title = element_blank(),
+               axis.ticks = element_blank(),
+               panel.grid = element_blank(),
+               legend.position = c(0.092, 0.15))
+p
+```
 
 # Creating `.kml` files for Google Earth
 
--   Pretty easy! (Follow along with [this](http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML), [this](http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r), and [this](http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal))
+Perhaps you want to work with Google Earth. `.kml` format works well and there are some links I found which helped accomplish this.
 
-    
-    talks <- read.csv("./data/talk-locations.csv")
-    talks <- talks[!duplicated(talks[, c("country", "city")]),
-                   c("city", "lat", "lon")]
-    
-    talks_sp <- talks
-    coordinates(talks_sp) <- c("lon", "lat")
-    proj4string(talks_sp) <- CRS("+init=epsg:4238")
-    talks_ll <- spTransform(talks_sp,
-                            CRS("+proj=longlat +datum=WGS84"))
-    
-    kmlPoints(g_earth_ll["city"], kmlfile = "./data/talks-google-earth.kml",
-              name = talks_ll$city,
-              icon = "http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+- [R/kml walkthrough](http://www.nceas.ucsb.edu/scicomp/usecases/shapeFileToKML)
+- [SO question on R to kml](http://stackoverflow.com/questions/7813141/how-to-create-a-kml-file-using-r)
+- [SO question on styling](http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal)
+- [Tutorial on plotKML package](http://gsif.isric.org/doku.php?id=wiki:tutorial_plotkml))
 
----
+We can take the data from earlier and re-create the great circle plot in Google Earth
 
-# todo screenshot of Google Earth
+```{r }
+# increase the size for reasonable icon scales
+talks_agg$size <- 100 * talks_agg$total
 
--   Also create great circle data
+# need to turn table into a spatial object
+talks_sp <- talks_agg
+coordinates(talks_sp) <- c("lon", "lat")                    # converts to spatial object
+proj4string(talks_sp) <- CRS("+init=epsg:4238")             # G Earth coordinate system
+talks_ll <- spTransform(talks_sp,
+                        CRS("+proj=longlat +datum=WGS84"))  # Something else G Earth wants
 
----
+# open a file connection and write the data with custom icon/size/label
+kml_open("./data/talks-w-gcircles.kml")
+kml_layer.SpatialPoints(talks_ll, colour = "white", labels = city, size = total,
+                        shape="http://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+kml_close("./data/talks-w-gcircles.kml")
+```
 
-# Getting some GPS data
+I think `plotKML` should be able to create the arcs, but I didn't figure out how... so here we're just writing the fairly simple `xml` tags.
 
-<div class="center">
-[<span class="underline">AndroSensor</span>](https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en)
-</div>
+```{r }
+# for each point set, generate the following kml syntax
+gcircs <- lapply(1:nrow(end), function(i) {
+  paste0("<Placemark><LineString><tesselate>1</tesselate><coordinates>",
+         start$lon, ",", start$lat, " ", end[i, "lon"], ",", end[i, "lat"],
+         "</coordinates></LineString></Placemark>") })
 
-1.       :B_column:BMCOL:
+# combine the results into a single table
+gcircs <- do.call(rbind, gcircs)
 
-    <div class="center">
-    ![nil](./img/andro-main.png)
-    </div>
+# print out each line of the above table
+# retult can simply be pasted after last <Placemark> in .kml file
+write.table(gcircs, row.names = F)
+```
 
-2.       :B_column:BMCOL:
+# Plotting a trip/path
 
-    <div class="center">
-    ![nil](./img/andro-sensors.png)
-    </div>
+Something else you might want to do is plot a GPS path. I got some data from [AndroSensor</span>](https://play.google.com/store/apps/details?id=com.fivasim.androsensor&hl=en) on my phone via my morning trip to work and then plotted it, along with the logged speed.
 
----
+```{r }
+# the file from my phone
+gps <- read.csv("./data/gps-data.csv", sep = ";")
 
-# Reading/cleaning the data
+# subset to columns we're interested in
+gps <- gps[, c(10, 11, 13, 18)]
 
-    gps <- read.csv("./data/gps-data.csv", sep = ";")
-    
-    # reduce to columns of interest
-    gps <- gps[, c(10, 11, 13, 18)]
-    
-    # give the data sensical names
-    names(gps) <- c("lat", "lon", "speed", "time")
-    head(gps, 5)
+# give the columns sensical names
+names(gps) <- c("lat", "lon", "speed", "time")
 
-           lat       lon speed time
-    1 44.92633 -93.09771    NA    5
-    2 44.92633 -93.09771    NA  505
-    3 44.92633 -93.09771    NA 1011
-    4 44.92633 -93.09771    NA 1532
-    5 44.92626 -93.09747     0 2032
+# look at the resultant table if you want
+head(gps, 5)
 
----
+# we can get a map using the min/max coordinates as our bounding box
+box <- c(left = min(gps$lon), bottom = min(gps$lat),
+         right = max(gps$lon), top = max(gps$lat))
 
-# Grab a background map
+gps_map <- get_map(location = box, source = "stamen",
+                   maptype = "terrain", crop = T)
 
-    box <- c(left = min(gps$lon), bottom = min(gps$lat),
-             right = max(gps$lon), top = max(gps$lat))
-    
-    gps_map <- get_map(location = box, source = "stamen",
-                       maptype = "terrain", crop = T)
-
-<div class="center">
-<./img/gps-map.pdf>
-</div>
-
----
-
-# Overplot with speed
-
-    p <- ggmap(gps_map) + geom_point(aes(x = lon, y = lat, colour = speed),
-                                     gps, size = 3)
-    p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
-
-<div class="center">
-<./img/gps-map-over.pdf>
-</div>
-
----
+# plot as usual, specifying the dot color as mapping to the speed column in the data
+p <- ggmap(gps_map)
+p <- p + geom_point(aes(x = lon, y = lat, colour = speed), data = gps, size = 3)
+p <- p + scale_colour_continuous(low = "black", high = "red", na.value = NA)
+```
 
 # Public transportation efficiency
 
--   Background information can be found [here](https://github.com/tcrug/public-transpo)
+You can read more about the roots of this [here](https://github.com/tcrug/public-transpo). Basically, I wanted to examine why some public transportation systems were so low/high in terms of their efficiency (energy consumption required to transport people around). I was using bubble plots, but the data lended itself to overplotting a map, so that's what we're doing here.
 
-    transpo <- read.csv("./data/public-transpo.csv")
-    
-    transpo_agg <- ddply(transpo, .(city, state), summarize,
-                         btus_pmile_ave = mean(btus_pmile),
-                         density = mean(population) / mean(service_area_sq_mi))
-    transpo_agg$lookup <- paste0(transpo_agg$city, ", ", transpo_agg$state)
-    
-    coords <- geocode(transpo_agg$lookup)
-    
-    transpo_agg <- cbind(transpo_agg, coords)
-    
-    # let's not run that again...
-    write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F, sep = ",")
+```{r transpo}
+# read in the data
+transpo <- read.csv("./data/public-transpo.csv")
 
----
+transpo_agg <- ddply(transpo, .(city, state), summarize,                    # stats by state
+                     btus_pmile_ave = mean(btus_pmile),
+                     density = mean(population) / mean(service_area_sq_mi))
 
-# Efficiency visualized
+# concatenate city and state for lookups with geocode()
+transpo_agg$lookup <- paste0(transpo_agg$city, ", ", transpo_agg$state)
 
-    plot <- read.csv("./data/transpo-agg-geocoded.csv")
-    plot <- plot[plot$state != "AK" & plot$state != "HI", ]
-    usa <- map_data("state")
-    plot <- plot[order(plot$btus_pmile_ave), ]
-    p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
-                                 data = usa, fill = "gray95", colour = "gray10")
-    p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
-                        size = sqrt(density)/pi), data = plot)
-    p <- p + scale_colour_gradient("log(BTUs / passenger-mile)", trans = "log")
-    p <- p + scale_x_continuous("") + scale_y_continuous("")
-    p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
-                                   labels = round((c(10, 20, 30, 40)*pi)^2, 0),
-                                   range = c(1, 8))
-    p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+coords <- geocode(transpo_agg$lookup)                                       # city/state string
 
----
+transpo_agg <- cbind(transpo_agg, coords)                                   # get lat/lon
 
-# Efficiency visualized
+# once you geocode all those locations, I hightly recommend storing the results
+# as a file so you don't have to re-run that part
+write.table(transpo_agg, file = "./data/transpo-agg-geocoded.csv", row.names = F, sep = ",")
 
-<div class="center">
-<./img/transpo-plot.pdf>
-</div>
+# read in saved data
+plot <- read.csv("./data/transpo-agg-geocoded.csv")
+
+# remove AK and HI since putting them in a plot makes the rest of the US really small
+plot <- plot[plot$state != "AK" & plot$state != "HI", ]
+
+# get our map
+usa <- map_data("state")
+
+# sort so bigger bubbles are plotted first
+plot <- plot[order(plot$btus_pmile_ave), ]
+
+# the plot, starting with US map
+p <- ggplot() + geom_polygon(aes(x = long, y = lat, group = group),
+                             data = usa, fill = "gray95", colour = "gray10")
+
+# add points, colored by efficiency, sized by passengers served per square mile
+p <- p + geom_point(aes(x = lon, y = lat, colour = btus_pmile_ave,
+                    size = sqrt(density)/pi), data = plot)
+
+# log scale the colors to reduce the effect of the huge spread
+p <- p + scale_colour_gradient("BTUs / passenger-mile", trans = "log")
+
+# we used the sqrt() function above to size the circles by area properly
+# so we need to adjust the labels to show area instead of the calculated
+# diameter we used above
+p <- p + scale_size_continuous("Passengers / Sq. Mile", breaks = c(10, 20, 30, 40),
+                               labels = round((c(10, 20, 30, 40)*pi)^2, 0),
+                               range = c(1, 8))
+# remove axis labels and ticks
+p <- p + scale_x_continuous("") + scale_y_continuous("")
+p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+p
+```
+
 
 # Converting data to `.json` for d3
 
--   R is an excellent for working with data
-    -   Reshape (wide &harr; long)
-    -   Calculate columns
-    -   Summarize, e.g. with `ddply`
--   Manipulate in R, then output to `.json`, d3's friend
--   Helpful function found [here](http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/)
+If you want to use d3 or something else that likes `.json` format, you can write it pretty easily. Initially I was using [this function](http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/) from someone's blog, but was recently alerted to the `jsonlite` package, which is dead simple.
 
-    
-    plot_json <- toJSONarray(plot)
-    file_con <- file("./d3/transpo.json")
-    writeLines(plot_json, file_con)
-    close(file_con)
+```{r }
+# take the plot dataset from the transpo map above and convert to json
+plot_json <- toJSON(plot)              # convert with jsonlite
 
----
+# open a file, write the json object we created, close the file
+file_con <- file("./d3/transpo.json")  # create file
+writeLines(plot_json, file_con)        # write results to file
+close(file_con)
+```
 
-# And voila, a d3 version!
+The results look like so:
 
-![nil](./img/transpo-d3.png)
+```{r eval=FALSE}
+[ { "city" : "Abilene", "state" : "TX", "btus_pmile_ave" : 13574.1, "density" : 2547.39,
+    "lookup" : "Abilene, TX", "lon" : -99.73, "lat" : 32.45 }, ...
+```
 
+# Visualizing work activity
 
----
+I tracked my time for a while with this [Timesheet](https://play.google.com/store/apps/details?id=com.rauscha.apps.timesheet) Android app. My idea was to show the various buildings/groups I interacted with throughout the year. On the cool end of the extreme, I thought it would be neat to track things like brainstorming sessions and then be able to show the interaction/experimentation history from some key interaction all the way through to product commercialization.
 
-# Reference
+Instead, I fizzled out, but here's plotting the data I *did* collect on top of 3M buildings.
+
+```{r }
+# read in data
+time <- read.csv("./data/timesheet.csv")              # read data
+
+time <- time[!is.na(time$Location), ]                 # remove entries w/ no loc
+
+# aggregate total time per location
+time <- ddply(time, .(Location), summarize,           # total time per loc
+              total = sum(Duration)) 
+
+mmm_box <- c(left = -93.0053, bottom = 44.9485,       # bounding box
+             right = -92.9844, top = 44.9632)
+
+mmm <- get_map(location = mmm_box, source = "stamen", # get map
+               maptype = "toner", crop = T)
+
+# figure out building coords and merge with timesheet data
+# there's probably a better way, but I simply created a background map and used trial/error
+# to get the points centered right
+bldgs <- data.frame(loc = time$Location))
+bldgs$lat <-  c(44.9515, 44.9576, 44.9525, 44.9545, 44.9577, 44.955,  44.9512, 44.9619, 44.9585)
+bldgs$lon <- -c(93.0033, 92.9935, 92.9955, 92.9982, 92.9998, 92.9897, 93.0009, 93.00,   92.9942)
+
+# merge building coordinates with timesheet data
+time <- merge(time, bldgs, by.x = "Location", by.y = "loc")
+
+# line from my main building to each of the other ones
+lines <- data.frame(lat = c(rep(bldgs[2, "lat"], 8), bldgs[c(1, 3:9), "lat"]),
+                    lon = c(rep(bldgs[2, "lon"], 8), bldgs[c(1, 3:9), "lon"]),
+                    grp = rep(1:8, 2))
+
+# bacground map
+p <- ggmap(mmm)
+
+# lines
+p <- p + geom_line(aes(x = lon, y = lat, group = grp),
+                   data = lines, colour = "steelblue")
+
+# points sized by total hours per building
+p <- p + geom_point(aes(x = lon, y = lat, size = sqrt(total)/pi),
+                    data = time, fill = "steelblue", colour = "black", pch = 21)
+
+# set sensible breaks and size ranges for hours
+p <- p + scale_size_continuous("Hours", breaks = c(0.5, 1, 1.5, 2),
+                               labels = c(2.5, 10, 20, 40), range = c(2, 6))
+
+# ditch axis labels/ticks
+p <- p + scale_x_continuous("") + scale_y_continuous("")
+p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_blank())
+p
+
+```
+
+# References
 
 -   [ggmap: Spatial Visualization with ggplot2](http://stat405.had.co.nz/ggmap.pdf), Kahle \\& Wickham
 -   [How to draw good looking maps in R](http://uchicagoconsulting.wordpress.com/2011/04/18/how-to-draw-good-looking-maps-in-r/), uchicagoconsulting
 -   [Great circles on a recentered worldmap](http://www.stanford.edu/~cengel/cgi-bin/anthrospace/great-circles-on-a-recentered-worldmap-in-ggplot), AnthroSpace
 -   [How to map connections with great circles](http://flowingdata.com/2011/05/11/how-to-map-connections-with-great-circles/), FlowingData
--   For any given package, find the documentation on [CRAN](http://cran.r-project.org/)!
+-   [SO question on creating `.kml` files](http://stackoverflow.com/questions/21487010/assistance-with-name-and-styleurl-in-kml-when-using-writeogr-from-rgdal)
+-   For any given package, find the documentation on [CRAN](http://cran.r-project.org/)
 
-Code and files from this presentation are on [github](https://github.com/jwhendy/devFest-geo)
+\vspace{0.5cm}
+
+Code and files from this presentation are on [github](https://github.com/jwhendy/devFest-geo)!

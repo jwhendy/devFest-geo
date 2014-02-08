@@ -505,7 +505,7 @@ kmlPoints(talks_ll["city"], kmlfile = "./data/talks-google-earth.kml",
 * Reading/cleaning the data
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports both :results output :eval no
+#+begin_src R :session r :exports both :results output :eval no :tangle yes
 gps <- read.csv("./data/gps-data.csv", sep = ";")
 
 # subset to columns we're interested in
@@ -633,7 +633,7 @@ p <- p + theme_bw() + theme(axis.text = element_blank(), axis.ticks = element_bl
 - Manipulate in R, output to =.json= with [[http://theweiluo.wordpress.com/2011/09/30/r-to-json-for-d3-js-and-protovis/][this]] or =jsonlite= [[http://cran.r-project.org/web/packages/jsonlite/][package]]
 
 #+latex: \scriptsize
-#+begin_src R :session r :exports code :results silent :eval no
+#+begin_src R :session r :exports code :results silent :eval no :tangle yes
 
 library(jsonlite)
 plot_json <- toJSON(plot)              # convert with jsonlite
